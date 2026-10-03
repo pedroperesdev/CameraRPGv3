@@ -43,6 +43,8 @@ public class PlayerController : MonoBehaviour
     private InputAction lookAction;
     private InputAction aimAction;
     private InputAction shootAction;
+    private InputAction[] selectSlotAction;
+
 
     //Player values
     private float g = -9.8f;
@@ -52,6 +54,7 @@ public class PlayerController : MonoBehaviour
     private string currEnemyName = null;
     private float minDistCamRay = 1f;
     private float maxDistCamRay = 14f;
+    private int slotNum = 6;
 
     //Player objects
     [SerializeField] GameObject cameraObj;
@@ -69,11 +72,20 @@ public class PlayerController : MonoBehaviour
 
     void Awake()
     {
-        PlayerTransform = gameObject.transform;
+        //Actions/Inputs
         moveAction = InputSystem.actions.FindAction("Move");
         lookAction = InputSystem.actions.FindAction("Look");
         aimAction = InputSystem.actions.FindAction("Aim");
         shootAction = InputSystem.actions.FindAction("Shoot");
+        string temp = "SelectSlot";
+        selectSlotAction = new InputAction[slotNum];
+        for(int i = 0; i < slotNum; i++)
+        {
+            selectSlotAction[i] = InputSystem.actions.FindAction(temp + (i+1).ToString());
+        }
+
+
+        PlayerTransform = gameObject.transform;
         cc = GetComponent<CharacterController>();
         cam = GetComponentInChildren<Camera>();
         hudc = GetComponent<HUDController>();
@@ -96,6 +108,18 @@ public class PlayerController : MonoBehaviour
         {
             Vector3 eulerAngle = transform.eulerAngles;
             transform.rotation = Quaternion.Euler(eulerAngle.x - lookInput.y * lookSensitivity * Time.deltaTime, eulerAngle.y + lookInput.x * lookSensitivity * Time.deltaTime, 0f);
+        }
+        //Check if slot active changed
+        if (!isAiming)
+        {            
+            for(int i = 0; i < slotNum; i++)
+            {
+                if (selectSlotAction[i].WasPressedThisFrame())
+                {
+                    hudc.SetActiveSlot(i+1);
+                    break;
+                }
+            }
         }
         if(aimAction.WasPressedThisFrame())
         {

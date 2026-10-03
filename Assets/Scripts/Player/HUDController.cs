@@ -9,11 +9,11 @@ public class HUDController : MonoBehaviour
     enum HUDStates { PlayerHUD, CamHUD }
 
     //PlayerHUD-related
-    MemoryInventory MI;
     [SerializeField] GameObject playerHUD;
     [SerializeField] GameObject[] slotsUI;
     [SerializeField] TextMeshProUGUI enemyName = null;
     [SerializeField] GameObject crosshair;
+    GameObject activeSlot;
     Image[] crosshairParts = new Image[2];
     //CamHUD-related
     [SerializeField] GameObject camHUD;
@@ -39,7 +39,6 @@ public class HUDController : MonoBehaviour
 
     void Awake()
     {
-        MI = GetComponent<MemoryInventory>();
     }
 
     void Start()
@@ -62,6 +61,8 @@ public class HUDController : MonoBehaviour
                 slotsUI[i].SetActive(true);
             } 
         }
+        //Set first slot as active by default
+        SetActiveSlot(1);
     }
     
     public void SetCamHUD()
@@ -103,6 +104,20 @@ public class HUDController : MonoBehaviour
                 currHUDTransition = StartCoroutine(ChangeToNormalHUD());
                 break;
             }
+        }
+    }
+
+    public void SetActiveSlot(int slot)
+    {
+        //Can only set a slot that is unlock as active 
+        if (slotsUI[slot - 1].activeSelf)
+        {
+            if(activeSlot != null)
+            {
+                activeSlot.transform.localScale = new Vector3(1f, 1f, 1f);
+            }
+            activeSlot = slotsUI[slot-1];
+            activeSlot.transform.localScale = new Vector3(1.3f, 1.3f, 1f);
         }
     }
     
