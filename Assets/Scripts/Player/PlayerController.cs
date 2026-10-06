@@ -6,7 +6,9 @@ using System;
 
 /// <summary>
 /// Acts as the central point to the user.
-/// Reads input and delegates actions to the corresponding script, via event actions (Observer Pattern with PlayerController as the subject).
+/// Reads input and delegates actions to the corresponding script, via event actions (Observer Pattern with PlayerController as the subject) 
+/// when other scripts need to react/listen or direct external script calls.
+/// Lives inside the player gameobject.
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
@@ -48,7 +50,7 @@ public class PlayerController : MonoBehaviour
     private InputAction lookAction;
     private InputAction aimAction;
     private InputAction shootAction;
-    private InputAction[] selectSlotAction;
+    private InputAction[] selectSlotActions;
     private InputAction scrollSlotAction;
     private InputAction interactAction;
 
@@ -62,7 +64,7 @@ public class PlayerController : MonoBehaviour
     private string currTextInfo = null;
     private float minDistCamRay = 1f;
     private float maxDistCamRay = 14f;
-    private int slotNum = 6;
+    private int numberOfSlots = 6;
     private float maxDistInteract = 2f;
 
     //Player objects
@@ -93,10 +95,10 @@ public class PlayerController : MonoBehaviour
         shootAction = InputSystem.actions.FindAction("Shoot");
         scrollSlotAction = InputSystem.actions.FindAction("ScrollSlot");
         string temp = "SelectSlot";
-        selectSlotAction = new InputAction[slotNum];
-        for(int i = 0; i < slotNum; i++)
+        selectSlotActions = new InputAction[numberOfSlots];
+        for(int i = 0; i < numberOfSlots; i++)
         {
-            selectSlotAction[i] = InputSystem.actions.FindAction(temp + (i+1).ToString());
+            selectSlotActions[i] = InputSystem.actions.FindAction(temp + (i+1).ToString());
         }
 
 
@@ -164,23 +166,23 @@ public class PlayerController : MonoBehaviour
         }
 
         //------------------SLOT CHANGE------------------
-        //Check if slot active changed via key
         if (!isAiming)
         {            
-            for(int i = 0; i < slotNum; i++)
+            //Check if slot active changed via key
+            for(int i = 0; i < numberOfSlots; i++)
             {
-                if (selectSlotAction[i].WasPressedThisFrame())
+                if (selectSlotActions[i].WasPressedThisFrame())
                 {
-                    hudc.SetActiveSlot(i+1);
+                    mi.SetActiveSlot(i);
                     break;
                 }
             }
-        }
-        //Check if slot active changed via mousewheel
-        float scrollInput = scrollSlotAction.ReadValue<float>();
-        if(scrollInput != 0)
-        {
-            hudc.ScrollSlotChange((int)scrollInput);
+            //Check if slot active changed via mousewheel
+            float scrollInput = scrollSlotAction.ReadValue<float>();
+            if(scrollInput != 0)
+            {
+                mi.ScrollSlotChange((int)scrollInput);
+            }
         }
 
         if(aimAction.WasPressedThisFrame())

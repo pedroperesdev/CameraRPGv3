@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -42,6 +41,21 @@ public class HUDController : MonoBehaviour
     void Awake()
     {
     }
+    void OnEnable()
+    {
+        MemoryInventory.OnSlotsChangedMI += RefreshSlots;
+        MemoryInventory.OnChangeActiveSlotMI += SetActiveSlot;
+        PlayerController.OnEnemyAim += SetEnemyName;
+        PlayerController.OnHoverInteractable += SetHoverInfo;
+    }
+
+    void OnDisable()
+    {
+        MemoryInventory.OnSlotsChangedMI -= RefreshSlots;
+        MemoryInventory.OnChangeActiveSlotMI -= SetActiveSlot;
+        PlayerController.OnEnemyAim -= SetEnemyName;
+        PlayerController.OnHoverInteractable -= SetHoverInfo;
+    }
 
     void Start()
     {
@@ -49,9 +63,6 @@ public class HUDController : MonoBehaviour
         crosshairParts[1] = crosshair.transform.GetChild(1).GetComponent<Image>();
         camHUD.SetActive(false);
         playerHUD.SetActive(true);
-        MemoryInventory.OnSlotsChanged += RefreshSlots;
-        PlayerController.OnEnemyAim += SetEnemyName;
-        PlayerController.OnHoverInteractable += SetHoverInfo;
     }
 
     void RefreshSlots(Slot[] emittedSlots)
@@ -117,45 +128,17 @@ public class HUDController : MonoBehaviour
         }
     }
 
-    public void ScrollSlotChange(int scrollStrength)
-    {
-        if(scrollStrength > 0)
-        {
-            //activeSlotNum from 1-6, to access slot array subtract 1 because its 0-5
-            int desiredSlot = activeSlotNum + 1;
-            if(slots.Length == desiredSlot - 1 || !slots[desiredSlot - 1].unlocked) SetActiveSlot(1);
-            else SetActiveSlot(desiredSlot);
-        }
-        else if(scrollStrength < 0)
-        {
-            int desiredSlot = activeSlotNum - 1;
-            if(desiredSlot == 0) SetActiveSlot(MaxSlotUnlocked() + 1);
-            else SetActiveSlot(desiredSlot);
-        }
-    }
-
-    //Returns last unlocked slot from 0-5
-    int MaxSlotUnlocked()
-    {
-        for(int i = slots.Length - 1; i >= 0; i--)
-        {
-            if(slots[i].unlocked) return i;
-        }
-        return 0;
-    }
-
-    //receive a slot number from 1-6
     public void SetActiveSlot(int slot)
     {
-        //Can only set a slot that is unlock as active 
-        if (slotsUI[slot - 1].activeSelf)
+        //Can only set a slot that is unlocked as active 
+        if (slotsUI[slot].activeSelf)
         {
             if(activeSlot != null)
             {
                 activeSlot.transform.localScale = new Vector3(1f, 1f, 1f);
             }
             activeSlotNum = slot;
-            activeSlot = slotsUI[slot-1];
+            activeSlot = slotsUI[slot];
             activeSlot.transform.localScale = new Vector3(1.3f, 1.3f, 1f);
         }
     }
