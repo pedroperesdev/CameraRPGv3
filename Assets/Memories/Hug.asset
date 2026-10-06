@@ -9,10 +9,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 47c3384fad5752e4fb16b4587267412a, type: 3}
+  m_Script: {fileID: 11500000, guid: b43ba23761fba0246a9f1cb47e6e5e1a, type: 3}
   m_Name: Hug
-  m_EditorClassIdentifier: Assembly-CSharp::MemoryWorld
+  m_EditorClassIdentifier: Assembly-CSharp::MemoryData
   memoryId: 1
   displayName: Hug
-  sprite: {fileID: 0}
+  sprite: {fileID: 21300000, guid: 389fccd072f1b9840966243f9e993fe1, type: 3}
   uses: 3

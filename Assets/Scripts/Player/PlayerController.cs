@@ -4,15 +4,20 @@ using UnityEngine.InputSystem;
 using System;
 
 
-
+/// <summary>
+/// Acts as the central point to the user.
+/// Reads input and delegates actions to the corresponding script, via event actions (Observer Pattern with PlayerController as the subject).
+/// </summary>
 public class PlayerController : MonoBehaviour
 {
+
     // Player
     // Global player position is known by other scripts
     public static Transform PlayerTransform;
     private CharacterController cc;
     private Camera cam;
-    HUDController hudc;
+    private HUDController hudc;
+    private MemoryInventory mi;
 
     //Enums 
     private enum AnimationStates { None, StartAim, StopAim };
@@ -44,6 +49,8 @@ public class PlayerController : MonoBehaviour
     private InputAction aimAction;
     private InputAction shootAction;
     private InputAction[] selectSlotAction;
+    private InputAction scrollSlotAction;
+    private InputAction interactAction;
 
 
     //Player values
@@ -52,9 +59,11 @@ public class PlayerController : MonoBehaviour
     private float movSpeed = 5f;
     private float lookSensitivity = 8f;
     private string currEnemyName = null;
+    private string currTextInfo = null;
     private float minDistCamRay = 1f;
     private float maxDistCamRay = 14f;
     private int slotNum = 6;
+    private float maxDistInteract = 2f;
 
     //Player objects
     [SerializeField] GameObject cameraObj;
@@ -69,14 +78,20 @@ public class PlayerController : MonoBehaviour
 
     //Player events
     public static event Action<string> OnEnemyAim;
+    public static event Action<string> OnHoverInteractable;
+
+    //Info messages
+    string hoverItemText = "Press [E] to pick up";
 
     void Awake()
     {
         //Actions/Inputs
         moveAction = InputSystem.actions.FindAction("Move");
         lookAction = InputSystem.actions.FindAction("Look");
+        interactAction = InputSystem.actions.FindAction("Interact");
         aimAction = InputSystem.actions.FindAction("Aim");
         shootAction = InputSystem.actions.FindAction("Shoot");
+        scrollSlotAction = InputSystem.actions.FindAction("ScrollSlot");
         string temp = "SelectSlot";
         selectSlotAction = new InputAction[slotNum];
         for(int i = 0; i < slotNum; i++)
@@ -89,6 +104,7 @@ public class PlayerController : MonoBehaviour
         cc = GetComponent<CharacterController>();
         cam = GetComponentInChildren<Camera>();
         hudc = GetComponent<HUDController>();
+        mi = GetComponent<MemoryInventory>();
     }
 
     void Update()
@@ -109,7 +125,46 @@ public class PlayerController : MonoBehaviour
             Vector3 eulerAngle = transform.eulerAngles;
             transform.rotation = Quaternion.Euler(eulerAngle.x - lookInput.y * lookSensitivity * Time.deltaTime, eulerAngle.y + lookInput.x * lookSensitivity * Time.deltaTime, 0f);
         }
-        //Check if slot active changed
+        if(Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hitInteract, maxDistInteract))
+        {
+            Debug.DrawLine(transform.position, hitInteract.point, Color.green);
+            if(hitInteract.collider.tag == "Memory")
+            {
+                //Display item message on hover
+                if(currTextInfo != hoverItemText)
+                {
+                    currTextInfo = hoverItemText;
+                    OnHoverInteractable?.Invoke(currTextInfo);
+                } 
+                if (interactAction.WasPressedThisFrame())
+                {
+                    bool success = mi.TryAddMemory(hitInteract.collider.GetComponent<MemoryWorld>().PickUp());
+                    if (!success)
+                    {
+                        //log error
+                    }
+                }
+            }
+            else
+            {
+                if(currTextInfo != null)
+                {
+                    currTextInfo = null;
+                    OnHoverInteractable?.Invoke(currTextInfo);
+                } 
+            }
+        }
+        else
+        {
+            if(currTextInfo != null)
+            {
+                currTextInfo = null;
+                OnHoverInteractable?.Invoke(currTextInfo);
+            } 
+        }
+
+        //------------------SLOT CHANGE------------------
+        //Check if slot active changed via key
         if (!isAiming)
         {            
             for(int i = 0; i < slotNum; i++)
@@ -121,6 +176,13 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
+        //Check if slot active changed via mousewheel
+        float scrollInput = scrollSlotAction.ReadValue<float>();
+        if(scrollInput != 0)
+        {
+            hudc.ScrollSlotChange((int)scrollInput);
+        }
+
         if(aimAction.WasPressedThisFrame())
         {
             CurrAnimState = AnimationStates.StartAim;
