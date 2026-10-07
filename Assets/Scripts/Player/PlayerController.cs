@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 
-
 /// <summary>
 /// Acts as the central point to the user.
 /// Reads input and delegates actions to the corresponding script, via event actions (Observer Pattern with PlayerController as the subject) 
@@ -23,6 +22,7 @@ public class PlayerController : MonoBehaviour
 
     //Enums 
     private enum AnimationStates { None, StartAim, StopAim };
+    public enum PlayerWarnings {InventoryFull};
 
     //Player Anim State
     private AnimationStates currAnimState = AnimationStates.None;
@@ -55,7 +55,7 @@ public class PlayerController : MonoBehaviour
     private InputAction interactAction;
 
 
-    //Player values
+    [Header("Player values")]
     private float g = -9.8f;
     private float vertVel = 0;
     private float movSpeed = 5f;
@@ -81,6 +81,7 @@ public class PlayerController : MonoBehaviour
     //Player events
     public static event Action<string> OnEnemyAim;
     public static event Action<string> OnHoverInteractable;
+    public static event Action<PlayerWarnings> OnPlayerWarning;
 
     //Info messages
     string hoverItemText = "Press [E] to pick up";
@@ -141,9 +142,14 @@ public class PlayerController : MonoBehaviour
                 if (interactAction.WasPressedThisFrame())
                 {
                     bool success = mi.TryAddMemory(hitInteract.collider.GetComponent<MemoryWorld>().PickUp());
-                    if (!success)
+                    if (success)
                     {
-                        //log error
+                        hitInteract.collider.GetComponent<MemoryWorld>().Despawn();
+                    }
+                    else
+                    {
+                        //We treat error msgs on controller because its central point
+                        OnPlayerWarning?.Invoke(PlayerWarnings.InventoryFull);
                     }
                 }
             }

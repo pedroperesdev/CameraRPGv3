@@ -7,8 +7,8 @@ using UnityEngine;
 /// </summary>
 public class MemoryInventory : MonoBehaviour
 {
-    public static event Action<Slot[]> OnSlotsChangedMI;
-    public static event Action<int> OnChangeActiveSlotMI;
+    public static event Action<Slot[]> OnSlotsChanged;
+    public static event Action<int> OnChangeActiveSlot;
     private Slot[] slots = new Slot[6];
     private int activeSlotNum;
 
@@ -24,12 +24,12 @@ public class MemoryInventory : MonoBehaviour
 
     void OnEnable()
     {
-        GameManager.OnSlotsChangedGM += UnlockSlot;
+        GameManager.OnSlotsChanged += UnlockSlot;
     }
 
     void OnDisable()
     {
-        GameManager.OnSlotsChangedGM -= UnlockSlot;
+        GameManager.OnSlotsChanged -= UnlockSlot;
     }
 
     void Start()
@@ -39,7 +39,7 @@ public class MemoryInventory : MonoBehaviour
         {
             if(unlocked > 0) slots[i].unlocked = true;
             unlocked--;
-            OnSlotsChangedMI?.Invoke(slots);
+            OnSlotsChanged?.Invoke(slots);
         }
     }
 
@@ -49,7 +49,7 @@ public class MemoryInventory : MonoBehaviour
     public void SetActiveSlot(int slot)
     {
         activeSlotNum = slot;
-        OnChangeActiveSlotMI?.Invoke(activeSlotNum);
+        OnChangeActiveSlot?.Invoke(activeSlotNum);
     }
     
     /// <summary>
@@ -65,7 +65,7 @@ public class MemoryInventory : MonoBehaviour
                 break;
             }
         }
-        OnSlotsChangedMI?.Invoke(slots);
+        OnSlotsChanged?.Invoke(slots);
     }
 
     /// <summary>
@@ -118,7 +118,7 @@ public class MemoryInventory : MonoBehaviour
                     slots[i].displayName = md.displayName;
                     slots[i].sprite = md.sprite;
                     slots[i].uses = md.uses;
-                    OnSlotsChangedMI?.Invoke(slots);
+                    OnSlotsChanged?.Invoke(slots);
                     return true;
                 }
             }
@@ -141,7 +141,7 @@ public class MemoryInventory : MonoBehaviour
             if(desiredSlot == -1) SetActiveSlot(MaxSlotUnlocked());
             else SetActiveSlot(desiredSlot);
         }
-        OnChangeActiveSlotMI?.Invoke(activeSlotNum);
+        OnChangeActiveSlot?.Invoke(activeSlotNum);
     }
 
     

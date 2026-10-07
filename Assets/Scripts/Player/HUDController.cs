@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -13,8 +14,8 @@ public class HUDController : MonoBehaviour
     [SerializeField] TextMeshProUGUI enemyName = null;
     [SerializeField] GameObject crosshair;
     [SerializeField] TextMeshProUGUI infoText = null;
+    [SerializeField] TextMeshProUGUI warningText = null;
     GameObject activeSlot;
-    int activeSlotNum;
     Image[] crosshairParts = new Image[2];
     //CamHUD-related
     [SerializeField] GameObject camHUD;
@@ -23,6 +24,7 @@ public class HUDController : MonoBehaviour
     float targetAlpha;
     float transTime = 0.1f;
     private Slot[] slots;
+    private Coroutine showWarningCoroutine = null;
 
 
     HUDStates currHUD;
@@ -43,18 +45,20 @@ public class HUDController : MonoBehaviour
     }
     void OnEnable()
     {
-        MemoryInventory.OnSlotsChangedMI += RefreshSlots;
-        MemoryInventory.OnChangeActiveSlotMI += SetActiveSlot;
+        MemoryInventory.OnSlotsChanged += RefreshSlots;
+        MemoryInventory.OnChangeActiveSlot += SetActiveSlot;
         PlayerController.OnEnemyAim += SetEnemyName;
         PlayerController.OnHoverInteractable += SetHoverInfo;
+        PlayerController.OnPlayerWarning += ShowPlayerWarning;
     }
 
     void OnDisable()
     {
-        MemoryInventory.OnSlotsChangedMI -= RefreshSlots;
-        MemoryInventory.OnChangeActiveSlotMI -= SetActiveSlot;
+        MemoryInventory.OnSlotsChanged -= RefreshSlots;
+        MemoryInventory.OnChangeActiveSlot -= SetActiveSlot;
         PlayerController.OnEnemyAim -= SetEnemyName;
         PlayerController.OnHoverInteractable -= SetHoverInfo;
+        PlayerController.OnPlayerWarning -= ShowPlayerWarning;
     }
 
     void Start()
@@ -63,6 +67,26 @@ public class HUDController : MonoBehaviour
         crosshairParts[1] = crosshair.transform.GetChild(1).GetComponent<Image>();
         camHUD.SetActive(false);
         playerHUD.SetActive(true);
+    }
+
+    void ShowPlayerWarning(PlayerController.PlayerWarnings warning)
+    {
+        string displayText = null;
+        showWarningCoroutine = null;
+        switch (warning)
+        {
+            case PlayerController.PlayerWarnings.InventoryFull:
+                displayText = "Camera roll is full";
+                break;
+        }
+        showWarningCoroutine = StartCoroutine(ShowWarning(displayText));
+    }
+
+    IEnumerator ShowWarning(string displayText)
+    {
+        warningText.text = displayText;
+        yield return new WaitForSeconds(2f);
+        warningText.text = null;
     }
 
     void RefreshSlots(Slot[] emittedSlots)
@@ -128,6 +152,11 @@ public class HUDController : MonoBehaviour
         }
     }
 
+    public void SetErrorMessage(string error)
+    {
+        
+    }
+
     public void SetActiveSlot(int slot)
     {
         //Can only set a slot that is unlocked as active 
@@ -137,7 +166,6 @@ public class HUDController : MonoBehaviour
             {
                 activeSlot.transform.localScale = new Vector3(1f, 1f, 1f);
             }
-            activeSlotNum = slot;
             activeSlot = slotsUI[slot];
             activeSlot.transform.localScale = new Vector3(1.3f, 1.3f, 1f);
         }

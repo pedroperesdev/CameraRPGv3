@@ -6,7 +6,7 @@ public class GameManager : MonoBehaviour
     public static GameManager I;
     public int unlockedSlots = 0;
     public int initialSlots;
-    public static event Action OnSlotsChangedGM;
+    public static event Action OnSlotsChanged;
     void Awake()
     {
         Cursor.lockState = CursorLockMode.Locked;
@@ -22,7 +22,7 @@ public class GameManager : MonoBehaviour
     void AddSlot()
     {
         unlockedSlots++;
-        OnSlotsChangedGM?.Invoke();
+        OnSlotsChanged?.Invoke();
     }
 }
 
