@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 using UnityEditor.EditorTools;
+using Unity.VisualScripting;
 
 /// <summary>
 /// Acts as the central point to the user.
@@ -123,7 +124,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-
+        if(GameManager.I.CurrentMode != GameManager.GameStates.Overworld) return;
+        
         Vector3 resultingMov = Vector3.zero;
         //Input
         Vector2 lookInput = lookAction.ReadValue<Vector2>();
@@ -260,6 +262,7 @@ public class PlayerController : MonoBehaviour
                         {
                             //hudc.CamSnap();
                             Debug.Log("snap!");
+                            CombatManager.I.Init();
                         }
                         else
                         {

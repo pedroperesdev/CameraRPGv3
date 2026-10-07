@@ -4,9 +4,13 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     public static GameManager I;
-    public int unlockedSlots = 0;
-    public int initialSlots;
+    public GameStates CurrentMode = GameStates.Overworld;
     public static event Action OnSlotsChanged;
+    public int unlockedSlots {get; private set;} = 0;
+    public enum GameStates {Overworld, Minigame}
+
+    //Auxiliary
+    private int initialSlots = 4;
     void Awake()
     {
         Cursor.lockState = CursorLockMode.Locked;
@@ -24,8 +28,22 @@ public class GameManager : MonoBehaviour
         unlockedSlots++;
         OnSlotsChanged?.Invoke();
     }
-}
 
-//TASKS
-//combat system: raycast camera mostra nome inimigo na lente, e muda pra vermelho
-//como guardar melhor este game data?
+    public void ChangeMode(GameStates state)
+    {
+        CurrentMode = state;
+        switch (state)
+        {
+            case GameStates.Minigame:
+            {
+                Time.timeScale = 0f;
+                break;
+            }
+            case GameStates.Overworld:
+            {
+                Time.timeScale = 1f;
+                break;
+            }
+        }
+    }
+}
