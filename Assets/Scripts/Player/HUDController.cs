@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -6,15 +5,18 @@ using UnityEngine.UI;
 
 public class HUDController : MonoBehaviour
 {
+
+    //HUD States
     enum HUDStates { PlayerHUD, CamHUD }
 
-    //PlayerHUD-related
+    //PlayerHUD components
     [SerializeField] GameObject playerHUD;
     [SerializeField] GameObject[] slotsUI;
     [SerializeField] TextMeshProUGUI enemyName = null;
     [SerializeField] GameObject crosshair;
     [SerializeField] TextMeshProUGUI infoText = null;
     [SerializeField] TextMeshProUGUI warningText = null;
+    [SerializeField] Image cameraRing;
     GameObject activeSlot;
     Image[] crosshairParts = new Image[2];
     //CamHUD-related
@@ -26,6 +28,8 @@ public class HUDController : MonoBehaviour
     private Slot[] slots;
     private Coroutine showWarningCoroutine = null;
     private bool firstInstance = true;
+
+    private float ringFillSpeed = 0.5f;
 
     HUDStates currHUD;
     Coroutine currHUDTransition = null;
@@ -43,6 +47,7 @@ public class HUDController : MonoBehaviour
     void Awake()
     {
     }
+
     void OnEnable()
     {
         MemoryInventory.OnSlotsChanged += RefreshSlots;
@@ -51,6 +56,7 @@ public class HUDController : MonoBehaviour
         PlayerController.OnEnemyAim += SetEnemyName;
         PlayerController.OnHoverInteractable += SetHoverInfo;
         PlayerController.OnPlayerWarning += ShowPlayerWarning;
+        PlayerController.OnCameraRingIncrease += SetCameraRingFill;
     }
 
     void OnDisable()
@@ -61,6 +67,7 @@ public class HUDController : MonoBehaviour
         PlayerController.OnEnemyAim -= SetEnemyName;
         PlayerController.OnHoverInteractable -= SetHoverInfo;
         PlayerController.OnPlayerWarning -= ShowPlayerWarning;
+        PlayerController.OnCameraRingIncrease -= SetCameraRingFill;
     }
 
     void Start()
@@ -69,6 +76,11 @@ public class HUDController : MonoBehaviour
         crosshairParts[1] = crosshair.transform.GetChild(1).GetComponent<Image>();
         camHUD.SetActive(false);
         playerHUD.SetActive(true);
+    }
+
+    void Update()
+    {
+        //if(ringDecreasing) cameraRing.fillAmount -= ringFillSpeed * Time.deltaTime;
     }
 
     void UseMemory(int newUses)
@@ -92,7 +104,6 @@ public class HUDController : MonoBehaviour
                 displayText = "No memory selected";
                 break;     
             }
-
         }
         showWarningCoroutine = StartCoroutine(ShowWarning(displayText));
     }
@@ -123,6 +134,12 @@ public class HUDController : MonoBehaviour
             SetActiveSlot(0);
             firstInstance = false;
         }
+    }
+
+    public void SetCameraRingFill(float newVal)
+    {
+        cameraRing.fillAmount = newVal;
+        //cameraRing.fillAmount += ringFillSpeed * Time.deltaTime;
     }
     
     public void SetCamHUD()
@@ -166,6 +183,8 @@ public class HUDController : MonoBehaviour
             }
         }
     }
+
+
 
     public void SetActiveSlot(int slot)
     {

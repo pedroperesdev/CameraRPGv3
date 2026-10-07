@@ -79,6 +79,7 @@ public class PlayerController : MonoBehaviour
     private float maxDistCamRay = 14f;
     private int numberOfSlots = 6;
     private float maxDistInteract = 2f;
+    float cameraTimeUntilClick = 1.5f;
 
     //Player objects
     [SerializeField] GameObject cameraObj;
@@ -88,11 +89,15 @@ public class PlayerController : MonoBehaviour
     private Vector3 cameraNeutralPos = new Vector3(0.62f,-0.016f,0.93f);
     float elapsed;
     float duration;
+    bool justTriedAimEnemy = false;
+    bool canSnap = false;
+    float currRingVal = 0f;
 
     //Player events
     public static event Action<string> OnEnemyAim;
     public static event Action<PlayerHoverInfo> OnHoverInteractable;
     public static event Action<PlayerWarnings> OnPlayerWarning;
+    public static event Action<float> OnCameraRingIncrease;
 
     void Awake()
     {
@@ -232,12 +237,23 @@ public class PlayerController : MonoBehaviour
             {
                 if(hit.collider.CompareTag("Enemy"))
                 {
+                    justTriedAimEnemy = true;
+                    if(currRingVal < 1f)
+                    {
+                        canSnap = false;
+                        currRingVal += Time.deltaTime/cameraTimeUntilClick; //delta x in one frame
+                    }
+                    else
+                    {
+                        canSnap = true;
+                    }
+                    OnCameraRingIncrease?.Invoke(currRingVal);
                     if(currEnemyName != hit.collider.name)
                     {
                         currEnemyName = hit.collider.name;
                         OnEnemyAim?.Invoke(currEnemyName);
                     }
-                    if (shootAction.WasPressedThisFrame())
+                    if (shootAction.WasPressedThisFrame() && canSnap)
                     {
                         bool success = mi.TryUseCurrMemory();
                         if (success)
@@ -255,6 +271,7 @@ public class PlayerController : MonoBehaviour
                 {
                     if(currEnemyName != null)
                     {
+                        TryClearCameraRing();
                         currEnemyName = null;
                         OnEnemyAim?.Invoke(null);
                     }
@@ -264,6 +281,7 @@ public class PlayerController : MonoBehaviour
             {
                 if(currEnemyName != null)
                 {
+                    TryClearCameraRing();
                     currEnemyName = null;
                     OnEnemyAim?.Invoke(null);
                 }
@@ -271,11 +289,23 @@ public class PlayerController : MonoBehaviour
         }
         if(aimAction.WasReleasedThisFrame())
         {
+            TryClearCameraRing();
             CurrAnimState = AnimationStates.StopAim;
             isAiming = false;
             currEnemyName = null;
             OnEnemyAim?.Invoke(null);
             hudc.SetPlayerHUD();
+        }
+    }
+
+    //Only clears ring if not cleared yet
+    void TryClearCameraRing()
+    {
+        if (justTriedAimEnemy)
+        {
+            currRingVal = 0f;
+            OnCameraRingIncrease?.Invoke(currRingVal);
+            justTriedAimEnemy = false;
         }
     }
 
