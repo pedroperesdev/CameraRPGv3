@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
+using UnityEditor.EditorTools;
 
 /// <summary>
 /// Acts as the central point to the user.
@@ -12,21 +13,34 @@ using System;
 public class PlayerController : MonoBehaviour
 {
 
-    // Player
-    // Global player position is known by other scripts
+    [Header("Player's global position")]
+    [Tooltip("Used by enemies to check their proximity to player")]
     public static Transform PlayerTransform;
+
+    //Components
     private CharacterController cc;
     private Camera cam;
+
+    //Scripts
     private HUDController hudc;
     private MemoryInventory mi;
 
-    //Enums 
+    //Enums make it possible to send a state relative no animation or a warning and then hud or another class reacts according to that state
+    //Enum for possible animation states
     private enum AnimationStates { None, StartAim, StopAim };
-    public enum PlayerWarnings {InventoryFull};
 
-    //Player Anim State
-    private AnimationStates currAnimState = AnimationStates.None;
+    //Enum for possible interactable hover messages
+    public enum PlayerHoverInfo {None, PickUp};
+
+    //Enum for possible warnings that can appear on HUD
+    public enum PlayerWarnings {InventoryFull, NoMemoryEquipped};
+
+    //Current animation
     private Coroutine currAnimCorout;
+    private AnimationStates currAnimState = AnimationStates.None;
+
+    //Current hover info
+    private PlayerHoverInfo currHoverInfo = PlayerHoverInfo.None;
 
     private AnimationStates CurrAnimState
     {
@@ -39,7 +53,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    //Player Action States
+    //Player States. Maybe state machine in the future?
     bool isAiming { get; set; } = false;
     
     //Player State Getters
@@ -61,7 +75,6 @@ public class PlayerController : MonoBehaviour
     private float movSpeed = 5f;
     private float lookSensitivity = 8f;
     private string currEnemyName = null;
-    private string currTextInfo = null;
     private float minDistCamRay = 1f;
     private float maxDistCamRay = 14f;
     private int numberOfSlots = 6;
@@ -70,21 +83,16 @@ public class PlayerController : MonoBehaviour
     //Player objects
     [SerializeField] GameObject cameraObj;
 
-    //Local positions
+    //Local variables/auxiliary
     private Vector3 cameraAimPos = new Vector3(0,0, 0.80f);
     private Vector3 cameraNeutralPos = new Vector3(0.62f,-0.016f,0.93f);
-
-    //Auxiliary
     float elapsed;
     float duration;
 
     //Player events
     public static event Action<string> OnEnemyAim;
-    public static event Action<string> OnHoverInteractable;
+    public static event Action<PlayerHoverInfo> OnHoverInteractable;
     public static event Action<PlayerWarnings> OnPlayerWarning;
-
-    //Info messages
-    string hoverItemText = "Press [E] to pick up";
 
     void Awake()
     {
@@ -101,8 +109,6 @@ public class PlayerController : MonoBehaviour
         {
             selectSlotActions[i] = InputSystem.actions.FindAction(temp + (i+1).ToString());
         }
-
-
         PlayerTransform = gameObject.transform;
         cc = GetComponent<CharacterController>();
         cam = GetComponentInChildren<Camera>();
@@ -128,16 +134,33 @@ public class PlayerController : MonoBehaviour
             Vector3 eulerAngle = transform.eulerAngles;
             transform.rotation = Quaternion.Euler(eulerAngle.x - lookInput.y * lookSensitivity * Time.deltaTime, eulerAngle.y + lookInput.x * lookSensitivity * Time.deltaTime, 0f);
         }
-        if(Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hitInteract, maxDistInteract))
+        CheckForInteraction();
+        CheckForSlotChange();
+        CheckCameraAim();
+        if(!cc.isGrounded)
+        {
+            resultingMov.y = vertVel * Time.deltaTime + 0.5f*g* Time.deltaTime * Time.deltaTime;
+            vertVel = vertVel + g * Time.deltaTime; 
+        }
+        else
+        {
+            resultingMov.y = 0; vertVel = 0;
+        }
+        cc.Move(resultingMov);
+    }
+
+    void CheckForInteraction()
+    {
+        if(!isAiming && Physics.Raycast(cam.transform.position, cam.transform.forward, out RaycastHit hitInteract, maxDistInteract))
         {
             Debug.DrawLine(transform.position, hitInteract.point, Color.green);
             if(hitInteract.collider.tag == "Memory")
             {
                 //Display item message on hover
-                if(currTextInfo != hoverItemText)
+                if(currHoverInfo != PlayerHoverInfo.PickUp)
                 {
-                    currTextInfo = hoverItemText;
-                    OnHoverInteractable?.Invoke(currTextInfo);
+                    currHoverInfo = PlayerHoverInfo.PickUp;
+                    OnHoverInteractable?.Invoke(currHoverInfo);
                 } 
                 if (interactAction.WasPressedThisFrame())
                 {
@@ -155,23 +178,25 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
-                if(currTextInfo != null)
+                if(currHoverInfo != PlayerHoverInfo.None)
                 {
-                    currTextInfo = null;
-                    OnHoverInteractable?.Invoke(currTextInfo);
+                    currHoverInfo = PlayerHoverInfo.None;
+                    OnHoverInteractable?.Invoke(currHoverInfo);
                 } 
             }
         }
         else
         {
-            if(currTextInfo != null)
+            if(currHoverInfo != PlayerHoverInfo.None)
             {
-                currTextInfo = null;
-                OnHoverInteractable?.Invoke(currTextInfo);
+                currHoverInfo = PlayerHoverInfo.None;
+                OnHoverInteractable?.Invoke(currHoverInfo);
             } 
         }
+    }
 
-        //------------------SLOT CHANGE------------------
+    void CheckForSlotChange()
+    {
         if (!isAiming)
         {            
             //Check if slot active changed via key
@@ -190,7 +215,10 @@ public class PlayerController : MonoBehaviour
                 mi.ScrollSlotChange((int)scrollInput);
             }
         }
+    }
 
+    void CheckCameraAim()
+    {
         if(aimAction.WasPressedThisFrame())
         {
             CurrAnimState = AnimationStates.StartAim;
@@ -211,7 +239,16 @@ public class PlayerController : MonoBehaviour
                     }
                     if (shootAction.WasPressedThisFrame())
                     {
-                        //Minigame manager
+                        bool success = mi.TryUseCurrMemory();
+                        if (success)
+                        {
+                            //hudc.CamSnap();
+                            Debug.Log("snap!");
+                        }
+                        else
+                        {
+                            OnPlayerWarning?.Invoke(PlayerWarnings.NoMemoryEquipped);
+                        }
                     }
                 }
                 else
@@ -240,16 +277,6 @@ public class PlayerController : MonoBehaviour
             OnEnemyAim?.Invoke(null);
             hudc.SetPlayerHUD();
         }
-        if(!cc.isGrounded)
-        {
-            resultingMov.y = vertVel * Time.deltaTime + 0.5f*g* Time.deltaTime * Time.deltaTime;
-            vertVel = vertVel + g * Time.deltaTime; 
-        }
-        else
-        {
-            resultingMov.y = 0; vertVel = 0;
-        }
-        cc.Move(resultingMov);
     }
 
     IEnumerator StartAiming()

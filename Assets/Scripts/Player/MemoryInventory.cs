@@ -9,6 +9,7 @@ public class MemoryInventory : MonoBehaviour
 {
     public static event Action<Slot[]> OnSlotsChanged;
     public static event Action<int> OnChangeActiveSlot;
+    public static event Action<int> OnMemoryUse;
     private Slot[] slots = new Slot[6];
     private int activeSlotNum;
 
@@ -124,7 +125,30 @@ public class MemoryInventory : MonoBehaviour
             }
         }
         return false;
-        // return bool? Error message on player + hover text. update UI. 
+    }
+
+    public bool TryUseCurrMemory()
+    {
+        Slot currMem = slots[activeSlotNum];
+        if(currMem.memoryId != 0 && currMem.uses > 0)
+        {
+            currMem.uses -= 1;
+            if(currMem.uses == 0) RemoveMemory();
+            else OnMemoryUse?.Invoke(currMem.uses);
+            return true;
+        }
+        else return false;
+    }
+
+    void RemoveMemory()
+    {
+        slots[activeSlotNum].memoryId = 0;
+        slots[activeSlotNum].displayName = null;
+        slots[activeSlotNum].sprite = null;
+        slots[activeSlotNum].uses = 0;
+        slots[activeSlotNum].unlocked = true;
+
+        OnSlotsChanged?.Invoke(slots);
     }
 
     public void ScrollSlotChange(int scrollStrength)

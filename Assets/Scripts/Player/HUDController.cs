@@ -25,7 +25,7 @@ public class HUDController : MonoBehaviour
     float transTime = 0.1f;
     private Slot[] slots;
     private Coroutine showWarningCoroutine = null;
-
+    private bool firstInstance = true;
 
     HUDStates currHUD;
     Coroutine currHUDTransition = null;
@@ -47,6 +47,7 @@ public class HUDController : MonoBehaviour
     {
         MemoryInventory.OnSlotsChanged += RefreshSlots;
         MemoryInventory.OnChangeActiveSlot += SetActiveSlot;
+        MemoryInventory.OnMemoryUse += UseMemory;
         PlayerController.OnEnemyAim += SetEnemyName;
         PlayerController.OnHoverInteractable += SetHoverInfo;
         PlayerController.OnPlayerWarning += ShowPlayerWarning;
@@ -56,6 +57,7 @@ public class HUDController : MonoBehaviour
     {
         MemoryInventory.OnSlotsChanged -= RefreshSlots;
         MemoryInventory.OnChangeActiveSlot -= SetActiveSlot;
+        MemoryInventory.OnMemoryUse -= UseMemory;
         PlayerController.OnEnemyAim -= SetEnemyName;
         PlayerController.OnHoverInteractable -= SetHoverInfo;
         PlayerController.OnPlayerWarning -= ShowPlayerWarning;
@@ -69,15 +71,28 @@ public class HUDController : MonoBehaviour
         playerHUD.SetActive(true);
     }
 
+    void UseMemory(int newUses)
+    {
+        activeSlot.transform.GetChild(2).GetComponent<TextMeshProUGUI>().text = newUses.ToString();
+    }
+
     void ShowPlayerWarning(PlayerController.PlayerWarnings warning)
     {
         string displayText = null;
-        showWarningCoroutine = null;
+        if(showWarningCoroutine != null) StopCoroutine(showWarningCoroutine);
         switch (warning)
         {
             case PlayerController.PlayerWarnings.InventoryFull:
+            {
                 displayText = "Camera roll is full";
-                break;
+                break;     
+            }
+            case PlayerController.PlayerWarnings.NoMemoryEquipped:
+            {
+                displayText = "No memory selected";
+                break;     
+            }
+
         }
         showWarningCoroutine = StartCoroutine(ShowWarning(displayText));
     }
@@ -97,17 +112,17 @@ public class HUDController : MonoBehaviour
             if (slots[i].unlocked)
             {
                 slotsUI[i].SetActive(true);
-                if(slots[i].memoryId != 0)
-                {
-                    slotsUI[i].transform.GetChild(1).GetComponent<Image>().sprite = slots[i].sprite;
-                    slotsUI[i].transform.GetChild(2).GetComponent<TextMeshProUGUI>().text = slots[i].uses.ToString();
-                    slotsUI[i].transform.GetChild(3).GetComponent<TextMeshProUGUI>().text = slots[i].displayName;
-                }
+                slotsUI[i].transform.GetChild(1).GetComponent<Image>().sprite = slots[i].sprite;
+                slotsUI[i].transform.GetChild(2).GetComponent<TextMeshProUGUI>().text = slots[i].uses == 0 ? "" : slots[i].uses.ToString();
+                slotsUI[i].transform.GetChild(3).GetComponent<TextMeshProUGUI>().text = slots[i].displayName;
             }
             else slotsUI[i].SetActive(false);
         }
-        //Set first slot as active by default
-        SetActiveSlot(1);
+        if (firstInstance)
+        {
+            SetActiveSlot(0);
+            firstInstance = false;
+        }
     }
     
     public void SetCamHUD()
@@ -150,11 +165,6 @@ public class HUDController : MonoBehaviour
                 break;
             }
         }
-    }
-
-    public void SetErrorMessage(string error)
-    {
-        
     }
 
     public void SetActiveSlot(int slot)
@@ -218,8 +228,20 @@ public class HUDController : MonoBehaviour
     }
 
     //Hover warnings
-    void SetHoverInfo(string info)
+    void SetHoverInfo(PlayerController.PlayerHoverInfo hoverInfo)
     {
-        infoText.text = info;
+        switch (hoverInfo)
+        {
+            case PlayerController.PlayerHoverInfo.None:
+            {
+                infoText.text = "";
+                break; 
+            }
+            case PlayerController.PlayerHoverInfo.PickUp:
+            {
+                infoText.text = "Press [E] to pick up";
+                break; 
+            }
+        }
     }
 }
