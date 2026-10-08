@@ -5,9 +5,8 @@ using UnityEngine.UI;
 
 public class HUDController : MonoBehaviour
 {
-
     //HUD States
-    enum HUDStates { PlayerHUD, CamHUD }
+    enum HUDStates { None, PlayerHUD, CamHUD }
 
     //PlayerHUD components
     [SerializeField] GameObject playerHUD;
@@ -28,9 +27,6 @@ public class HUDController : MonoBehaviour
     private Slot[] slots;
     private Coroutine showWarningCoroutine = null;
     private bool firstInstance = true;
-
-    private float ringFillSpeed = 0.5f;
-
     HUDStates currHUD;
     Coroutine currHUDTransition = null;
     HUDStates CurrHUD
@@ -146,11 +142,17 @@ public class HUDController : MonoBehaviour
     {
         CurrHUD = HUDStates.CamHUD;
     }
+
     public void SetPlayerHUD()
     {
         CurrHUD = HUDStates.PlayerHUD;
     }
 
+    public void SetNoHUD()
+    {
+        CurrHUD = HUDStates.None;
+    }
+    
     public void SetEnemyName(string name)
     {
         if (name != null)
@@ -171,6 +173,11 @@ public class HUDController : MonoBehaviour
         if(currHUDTransition != null) StopCoroutine(currHUDTransition);
         switch (currHUD)
         {
+            case HUDStates.None:
+            {
+                ChangeToNoHUD();
+                break;
+            }
             case HUDStates.CamHUD:
             {
                 currHUDTransition = StartCoroutine(ChangeToCamHUD());
@@ -198,6 +205,12 @@ public class HUDController : MonoBehaviour
             activeSlot = slotsUI[slot];
             activeSlot.transform.localScale = new Vector3(1.3f, 1.3f, 1f);
         }
+    }
+
+    void ChangeToNoHUD()
+    {
+        playerHUD.SetActive(false);
+        camHUD.SetActive(false);
     }
     
     IEnumerator ChangeToCamHUD()

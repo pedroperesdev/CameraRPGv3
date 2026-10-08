@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -10,6 +11,7 @@ public class MemoryInventory : MonoBehaviour
     public static event Action<Slot[]> OnSlotsChanged;
     public static event Action<int> OnChangeActiveSlot;
     public static event Action<int> OnMemoryUse;
+
     private Slot[] slots = new Slot[6];
     private int activeSlotNum;
 
@@ -26,11 +28,13 @@ public class MemoryInventory : MonoBehaviour
     void OnEnable()
     {
         GameManager.OnSlotsChanged += UnlockSlot;
+        PlayerController.OnMemoryCopy += CheckUsesAndRemoveMemory;
     }
 
     void OnDisable()
     {
         GameManager.OnSlotsChanged -= UnlockSlot;
+        PlayerController.OnMemoryCopy -= CheckUsesAndRemoveMemory;
     }
 
     void Start()
@@ -119,6 +123,7 @@ public class MemoryInventory : MonoBehaviour
                     slots[i].displayName = md.displayName;
                     slots[i].sprite = md.sprite;
                     slots[i].uses = md.uses;
+                    slots[i].minigame = md.minigame;
                     OnSlotsChanged?.Invoke(slots);
                     return true;
                 }
@@ -127,26 +132,32 @@ public class MemoryInventory : MonoBehaviour
         return false;
     }
 
-    public bool TryUseCurrMemory()
+    /// <summary>
+    /// If can use memory, returns the slot with all memory data.
+    /// Slot is similar in structure to the memory.
+    /// </summary>
+    public Slot TryUseCurrMemory()
     {
         Slot currMem = slots[activeSlotNum];
         if(currMem.memoryId != 0 && currMem.uses > 0)
         {
             currMem.uses -= 1;
-            if(currMem.uses == 0) RemoveMemory();
-            else OnMemoryUse?.Invoke(currMem.uses);
-            return true;
+            OnMemoryUse?.Invoke(currMem.uses);
+            return currMem;
         }
-        else return false;
+        else return null;
     }
 
-    void RemoveMemory()
+    void CheckUsesAndRemoveMemory()
     {
+        if(slots[activeSlotNum].uses != 0) return;
+        
         slots[activeSlotNum].memoryId = 0;
         slots[activeSlotNum].displayName = null;
         slots[activeSlotNum].sprite = null;
         slots[activeSlotNum].uses = 0;
         slots[activeSlotNum].unlocked = true;
+        slots[activeSlotNum].minigame = null;
 
         OnSlotsChanged?.Invoke(slots);
     }
@@ -190,4 +201,5 @@ public class Slot
     public Sprite sprite;
     public int uses;
     public bool unlocked;
+    public Minigame minigame;
 }

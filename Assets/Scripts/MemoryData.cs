@@ -7,5 +7,5 @@ public class MemoryData : ScriptableObject
     public string displayName;
     public Sprite sprite;
     public int uses;
-    //public Minigame minigame;
+    public Minigame minigame;
 }

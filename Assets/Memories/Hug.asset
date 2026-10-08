@@ -16,3 +16,4 @@ MonoBehaviour:
   displayName: Hug
   sprite: {fileID: 21300000, guid: 389fccd072f1b9840966243f9e993fe1, type: 3}
   uses: 3
+  minigame: {fileID: 3098875576399721737, guid: f75e6a8e465921d4eb2b9f78ac3e2e28, type: 3}

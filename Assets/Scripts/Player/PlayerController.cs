@@ -99,6 +99,8 @@ public class PlayerController : MonoBehaviour
     public static event Action<PlayerHoverInfo> OnHoverInteractable;
     public static event Action<PlayerWarnings> OnPlayerWarning;
     public static event Action<float> OnCameraRingIncrease;
+    //delete memory only after copied for the combat manager
+    public static event Action OnMemoryCopy;
 
     void Awake()
     {
@@ -124,7 +126,10 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if(GameManager.I.CurrentMode != GameManager.GameStates.Overworld) return;
+        if(GameManager.I.CurrentMode == GameManager.GameStates.Minigame)
+        {
+            return;
+        }
         
         Vector3 resultingMov = Vector3.zero;
         //Input
@@ -257,12 +262,17 @@ public class PlayerController : MonoBehaviour
                     }
                     if (shootAction.WasPressedThisFrame() && canSnap)
                     {
-                        bool success = mi.TryUseCurrMemory();
-                        if (success)
+                        Slot tempCopy;
+                        Slot mem = mi.TryUseCurrMemory();
+                        if (mem != null)
                         {
-                            //hudc.CamSnap();
-                            Debug.Log("snap!");
-                            CombatManager.I.Init();
+                            tempCopy = CreateMemCopy(mem);
+                            OnMemoryCopy?.Invoke();
+                            currRingVal = 0f;
+                            hudc.SetPlayerHUD();
+                            CurrAnimState = AnimationStates.None;
+                            isAiming = false;
+                            CombatManager.I.Init(tempCopy);
                         }
                         else
                         {
@@ -312,6 +322,18 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    Slot CreateMemCopy(Slot slot)
+    {
+        Slot temp = new Slot();
+        temp.memoryId = slot.memoryId;
+        temp.displayName = slot.displayName;
+        temp.sprite = slot.sprite;
+        temp.uses = slot.uses;
+        temp.unlocked = slot.unlocked;
+        temp.minigame = slot.minigame;
+        return temp;
+    }
+
     IEnumerator StartAiming()
     {
         while(elapsed < duration)
@@ -343,6 +365,11 @@ public class PlayerController : MonoBehaviour
         elapsed = 0; duration = 0.2f;
         switch (currAnimState)
         {
+            case AnimationStates.None:
+            {
+                cameraObj.transform.localPosition = cameraNeutralPos;
+                break;
+            }
             case AnimationStates.StartAim:
             {
                 currAnimCorout = StartCoroutine(StartAiming());
