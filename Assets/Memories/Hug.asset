@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Hug
   m_EditorClassIdentifier: Assembly-CSharp::MemoryData
   memoryId: 1
-  displayName: Hug
-  sprite: {fileID: 21300000, guid: 389fccd072f1b9840966243f9e993fe1, type: 3}
+  displayName: hug
+  sprite: {fileID: 21300000, guid: 9c7462a0fec7ce04a88a75c0a1ce60f7, type: 3}
   uses: 3
   minigame: {fileID: 3098875576399721737, guid: f75e6a8e465921d4eb2b9f78ac3e2e28, type: 3}

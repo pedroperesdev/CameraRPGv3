@@ -272,7 +272,7 @@ public class PlayerController : MonoBehaviour
                             hudc.SetPlayerHUD();
                             CurrAnimState = AnimationStates.None;
                             isAiming = false;
-                            CombatManager.I.Init(tempCopy);
+                            StartCoroutine(CombatManager.I.Init(tempCopy));
                         }
                         else
                         {
