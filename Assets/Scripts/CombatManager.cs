@@ -14,11 +14,16 @@ public class CombatManager : MonoBehaviour
     float minigameDuration = 5f;
 
     //Auxiliary
+    enum Adjust { Increase, Decrease }
     Minigame currMinigame;
     Slot currMem;
-    bool introAlphaDecrease = false;
-    bool introAlphaIncrease = false;
-    float decreaseSpeed = 20f;
+    float decreaseSpeed = 1f;
+    float increaseSpeed = 0.75f;
+
+    //Assets to be used
+    Sprite memImage;
+    VideoClip clip;
+
 
     void Awake()
     {
@@ -30,8 +35,7 @@ public class CombatManager : MonoBehaviour
 
     void Update()
     {
-        IntroAlphaIncrease();
-        IntroAlphaDecrease();
+
     }
 
     public IEnumerator Init(Slot mem)
@@ -40,31 +44,70 @@ public class CombatManager : MonoBehaviour
         GameManager.I.ChangeMode(GameManager.GameStates.Minigame);
         background.SetActive(true);
         minigameFrame.SetActive(true);
+
+        //before intro anim, clear last values
+        intro.GetComponent<VideoPlayer>().clip = null;
+        minigameArea.sprite = null;
+        //before the image appear animation, alpha will be 0 fist time, so we need to set to 1
+        Color c = minigameArea.color;
+        c.a = 1f;
+        minigameArea.color = c;
+
+
+        //load beforehand
+        memImage = Resources.Load<Sprite>("MemoryImages/"+currMem.displayName);
+        clip = Resources.Load<VideoClip>("MemoryIntros/"+currMem.displayName);
+        yield return new WaitForSecondsRealtime(0.5f);
+
         yield return StartCoroutine(DoIntroAnimation());
         StartCoroutine(ExecuteMinigame());
     }
 
+    IEnumerator ChangeAlphaImg(Graphic gr, Adjust adj)
+    {
+        Color currColor = gr.color;
+        if(adj == Adjust.Decrease)
+        {
+            currColor.a = 1f;
+            gr.color = currColor;
+            yield return new WaitForSecondsRealtime(1f);
+            while (currColor.a > 0)
+            {
+                currColor.a -= decreaseSpeed * Time.unscaledDeltaTime;
+                gr.color = currColor;
+                yield return null;
+            }
+        }
+        else if(adj == Adjust.Increase)
+        {
+            currColor.a = 0f;
+            gr.color = currColor;
+            while (currColor.a < 1)
+            {
+                currColor.a += increaseSpeed * Time.unscaledDeltaTime;
+                gr.color = currColor;
+                yield return null;
+            }
+        }
+        yield break;
+    }
+
     IEnumerator DoIntroAnimation()
     {
-        Sprite memImage = Resources.Load<Sprite>("MemoryImages/"+currMem.displayName);
         if (memImage != null)
         {
             minigameArea.sprite = memImage;
         }
-        introAlphaIncrease = true;
+        yield return StartCoroutine(ChangeAlphaImg(minigameArea, Adjust.Increase));
         yield return new WaitForSecondsRealtime(0.5f);
 
-        minigameArea.sprite = null;
-
-        VideoClip clip = Resources.Load<VideoClip>("MemoryIntros/"+currMem.displayName);
         if (clip != null)
         {
             intro.GetComponent<VideoPlayer>().clip = clip;
             intro.GetComponent<VideoPlayer>().Play();
         }
-        yield return new WaitForSecondsRealtime(1.5f);
-        introAlphaIncrease = false;
-        introAlphaDecrease = true;
+        minigameArea.sprite = null;
+        yield return StartCoroutine(ChangeAlphaImg(intro.GetComponent<RawImage>(), Adjust.Decrease));
     }
 
     IEnumerator ExecuteMinigame()
@@ -75,36 +118,6 @@ public class CombatManager : MonoBehaviour
         currMinigame.End();
         Destroy(currMinigame.gameObject);
         End();
-    }
-
-    void IntroAlphaDecrease()
-    {
-        if (introAlphaDecrease)
-        {
-            Color currColor = intro.GetComponent<RawImage>().color;
-            if(currColor.a < 0)
-            {
-                introAlphaDecrease = false;
-                return;
-            }
-            currColor.a -= decreaseSpeed * Time.unscaledDeltaTime;
-            intro.GetComponent<RawImage>().color = currColor;
-        }
-    }
-
-    void IntroAlphaIncrease()
-    {
-        if (introAlphaIncrease)
-        {
-            Color currColor = minigameArea.GetComponent<Image>().color;
-            if(currColor.a > 1)
-            {
-                introAlphaIncrease = false;
-                return;
-            }
-            currColor.a += decreaseSpeed * Time.unscaledDeltaTime;
-            minigameArea.GetComponent<Image>().color = currColor;
-        }
     }
 
     public void End()
