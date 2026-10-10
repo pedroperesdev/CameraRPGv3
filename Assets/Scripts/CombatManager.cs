@@ -17,6 +17,7 @@ public class CombatManager : MonoBehaviour
     enum Adjust { Increase, Decrease }
     Minigame currMinigame;
     Slot currMem;
+    Enemy currEnemy;
     float decreaseSpeed = 1f;
     float increaseSpeed = 0.75f;
 
@@ -38,9 +39,11 @@ public class CombatManager : MonoBehaviour
 
     }
 
-    public IEnumerator Init(Slot mem)
+    public IEnumerator Init(Slot mem, Enemy enemy)
     {
         currMem = mem;
+        currEnemy = enemy;
+
         GameManager.I.ChangeMode(GameManager.GameStates.Minigame);
         background.SetActive(true);
         minigameFrame.SetActive(true);
@@ -52,7 +55,6 @@ public class CombatManager : MonoBehaviour
         Color c = minigameArea.color;
         c.a = 1f;
         minigameArea.color = c;
-
 
         //load beforehand
         memImage = Resources.Load<Sprite>("MemoryImages/"+currMem.displayName);
@@ -120,7 +122,7 @@ public class CombatManager : MonoBehaviour
         End();
     }
 
-    public void End()
+    void End()
     {
         background.SetActive(false);
         minigameFrame.SetActive(false);
@@ -129,6 +131,12 @@ public class CombatManager : MonoBehaviour
         Color currColor = intro.GetComponent<RawImage>().color;
         currColor.a = 0f;
         intro.GetComponent<RawImage>().color = currColor;
+        ApplyDmg();
+    }
+
+    void ApplyDmg()
+    {
+        currEnemy.TakeDamage(10f);
     }
 
 

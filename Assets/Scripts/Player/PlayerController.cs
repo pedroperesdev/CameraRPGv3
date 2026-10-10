@@ -2,8 +2,6 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
-using UnityEditor.EditorTools;
-using Unity.VisualScripting;
 
 /// <summary>
 /// Acts as the central point to the user.
@@ -272,7 +270,9 @@ public class PlayerController : MonoBehaviour
                             hudc.SetPlayerHUD();
                             CurrAnimState = AnimationStates.None;
                             isAiming = false;
-                            StartCoroutine(CombatManager.I.Init(tempCopy));
+                            //get curr enemy
+                            Enemy enemy = hit.collider.GetComponent<Enemy>();
+                            StartCoroutine(CombatManager.I.Init(tempCopy, enemy));
                         }
                         else
                         {

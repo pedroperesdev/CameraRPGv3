@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public abstract class Enemy : MonoBehaviour
+public abstract class Enemy : MonoBehaviour, IDamageable
 {
     protected CharacterController cc;
     public string EnemyName;
@@ -17,6 +17,7 @@ public abstract class Enemy : MonoBehaviour
     void Awake()
     {
         cc = GetComponent<CharacterController>();
+        CurrHp = MaxHp;
     }
 
     void Start()
@@ -35,6 +36,17 @@ public abstract class Enemy : MonoBehaviour
                 alerted = true;
             }
         }
+    }
+
+    public void TakeDamage(float dmg)
+    {
+        CurrHp -= dmg;
+        if(CurrHp <= 0) Die();
+    }
+
+    void Die()
+    {
+        Destroy(gameObject);
     }
 
     void Update()
