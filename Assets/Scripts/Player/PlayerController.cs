@@ -69,7 +69,7 @@ public class PlayerController : MonoBehaviour
 
 
     [Header("Player values")]
-    public float lookSensitivity = 8f;
+    public float lookSensitivity = 0.08f;
     private float g = -9.8f;
     private float vertVel = 0;
     private float movSpeed = 5f;
@@ -143,7 +143,7 @@ public class PlayerController : MonoBehaviour
         if(lookInput != Vector2.zero) 
         {
             Vector3 eulerAngle = transform.eulerAngles;
-            transform.rotation = Quaternion.Euler(eulerAngle.x - lookInput.y * lookSensitivity * Time.deltaTime, eulerAngle.y + lookInput.x * lookSensitivity * Time.deltaTime, 0f);
+            transform.rotation = Quaternion.Euler(eulerAngle.x - lookInput.y * lookSensitivity, eulerAngle.y + lookInput.x * lookSensitivity, 0f);
         }
         CheckForInteraction();
         CheckForSlotChange();
