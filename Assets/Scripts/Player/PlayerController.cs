@@ -73,7 +73,7 @@ public class PlayerController : MonoBehaviour
     private float g = -9.8f;
     private float vertVel = 0;
     private float movSpeed = 5f;
-    private string currEnemyName = null;
+    private GameObject currEnemy = null;
     private float minDistCamRay = 1f;
     private float maxDistCamRay = 14f;
     private int numberOfSlots = 6;
@@ -255,11 +255,11 @@ public class PlayerController : MonoBehaviour
                     }
                     OnCameraRingIncrease?.Invoke(currRingVal);
                     //If aiming at a different enemy
-                    if(currEnemyName != hit.collider.name)
+                    if(currEnemy != hit.collider.gameObject)
                     {
                         TryClearCameraRing();
-                        currEnemyName = hit.collider.name;
-                        OnEnemyAim?.Invoke(currEnemyName);
+                        currEnemy = hit.collider.gameObject;
+                        OnEnemyAim?.Invoke(currEnemy.GetComponent<Enemy>().EnemyName);
                     }
                     if (shootAction.WasPressedThisFrame() && canSnap)
                     {
@@ -285,20 +285,20 @@ public class PlayerController : MonoBehaviour
                 }
                 else
                 {
-                    if(currEnemyName != null)
+                    if(currEnemy != null)
                     {
                         TryClearCameraRing();
-                        currEnemyName = null;
+                        currEnemy = null;
                         OnEnemyAim?.Invoke(null);
                     }
                 }
             }
             else
             {
-                if(currEnemyName != null)
+                if(currEnemy != null)
                 {
                     TryClearCameraRing();
-                    currEnemyName = null;
+                    currEnemy = null;
                     OnEnemyAim?.Invoke(null);
                 }
             }
@@ -308,7 +308,7 @@ public class PlayerController : MonoBehaviour
             TryClearCameraRing();
             CurrAnimState = AnimationStates.StopAim;
             isAiming = false;
-            currEnemyName = null;
+            currEnemy = null;
             OnEnemyAim?.Invoke(null);
             hudc.SetPlayerHUD();
         }
