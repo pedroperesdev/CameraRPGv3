@@ -69,10 +69,10 @@ public class PlayerController : MonoBehaviour
 
 
     [Header("Player values")]
+    public float lookSensitivity = 8f;
     private float g = -9.8f;
     private float vertVel = 0;
     private float movSpeed = 5f;
-    private float lookSensitivity = 8f;
     private string currEnemyName = null;
     private float minDistCamRay = 1f;
     private float maxDistCamRay = 14f;
@@ -91,6 +91,7 @@ public class PlayerController : MonoBehaviour
     bool justTriedAimEnemy = false;
     bool canSnap = false;
     float currRingVal = 0f;
+    GameObject currEnemyOnHUD;
 
     //Player events
     public static event Action<string> OnEnemyAim;
@@ -253,8 +254,10 @@ public class PlayerController : MonoBehaviour
                         canSnap = true;
                     }
                     OnCameraRingIncrease?.Invoke(currRingVal);
+                    //If aiming at a different enemy
                     if(currEnemyName != hit.collider.name)
                     {
+                        TryClearCameraRing();
                         currEnemyName = hit.collider.name;
                         OnEnemyAim?.Invoke(currEnemyName);
                     }
