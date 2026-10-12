@@ -94,7 +94,7 @@ public class PlayerController : MonoBehaviour
     GameObject currEnemyOnHUD;
 
     //Player events
-    public static event Action<string> OnEnemyAim;
+    public static event Action<GameObject> OnEnemyAim;
     public static event Action<PlayerHoverInfo> OnHoverInteractable;
     public static event Action<PlayerWarnings> OnPlayerWarning;
     public static event Action<float> OnCameraRingIncrease;
@@ -259,7 +259,7 @@ public class PlayerController : MonoBehaviour
                     {
                         TryClearCameraRing();
                         currEnemy = hit.collider.gameObject;
-                        OnEnemyAim?.Invoke(currEnemy.GetComponent<Enemy>().EnemyName);
+                        OnEnemyAim?.Invoke(currEnemy);
                     }
                     if (shootAction.WasPressedThisFrame() && canSnap)
                     {
@@ -314,7 +314,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    //Only clears ring if not cleared yet
+    //By using justTriedAimEnemy boolean, it only clears when needed instead of every frame
     void TryClearCameraRing()
     {
         if (justTriedAimEnemy)

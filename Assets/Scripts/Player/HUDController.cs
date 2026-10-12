@@ -16,11 +16,18 @@ public class HUDController : MonoBehaviour
     [SerializeField] TextMeshProUGUI infoText = null;
     [SerializeField] TextMeshProUGUI warningText = null;
     [SerializeField] Image cameraRing;
-    GameObject activeSlot;
-    Image[] crosshairParts = new Image[2];
-    //CamHUD-related
     [SerializeField] GameObject camHUD;
     [SerializeField] CanvasGroup fadeRect;
+    //Will be activated and disabled on enemy hover
+    [SerializeField] GameObject enemyHUD;
+    //Enemy portrait parts
+    [SerializeField] RawImage enemyPortrait;
+    [SerializeField] Image enemyHP;
+
+    GameObject activeSlot;
+    Image[] crosshairParts = new Image[2];
+    GameObject lastEnemy = null;
+
     float currAlpha;
     float targetAlpha;
     float transTime = 0.1f;
@@ -49,7 +56,7 @@ public class HUDController : MonoBehaviour
         MemoryInventory.OnSlotsChanged += RefreshSlots;
         MemoryInventory.OnChangeActiveSlot += SetActiveSlot;
         MemoryInventory.OnMemoryUse += UseMemory;
-        PlayerController.OnEnemyAim += SetEnemyName;
+        PlayerController.OnEnemyAim += CheckCurrentEnemy;
         PlayerController.OnHoverInteractable += SetHoverInfo;
         PlayerController.OnPlayerWarning += ShowPlayerWarning;
         PlayerController.OnCameraRingIncrease += SetCameraRingFill;
@@ -60,7 +67,7 @@ public class HUDController : MonoBehaviour
         MemoryInventory.OnSlotsChanged -= RefreshSlots;
         MemoryInventory.OnChangeActiveSlot -= SetActiveSlot;
         MemoryInventory.OnMemoryUse -= UseMemory;
-        PlayerController.OnEnemyAim -= SetEnemyName;
+        PlayerController.OnEnemyAim -= CheckCurrentEnemy;
         PlayerController.OnHoverInteractable -= SetHoverInfo;
         PlayerController.OnPlayerWarning -= ShowPlayerWarning;
         PlayerController.OnCameraRingIncrease -= SetCameraRingFill;
@@ -76,7 +83,7 @@ public class HUDController : MonoBehaviour
 
     void Update()
     {
-        //if(ringDecreasing) cameraRing.fillAmount -= ringFillSpeed * Time.deltaTime;
+        
     }
 
     void UseMemory(int newUses)
@@ -152,6 +159,20 @@ public class HUDController : MonoBehaviour
     {
         CurrHUD = HUDStates.None;
     }
+
+    void CheckCurrentEnemy(GameObject enemy)
+    {
+        if(enemy != null)
+        {
+            SetEnemyName(enemy.GetComponent<Enemy>().EnemyName);
+            SetEnemyHUD(enemy);
+        }
+        else
+        {
+            SetEnemyName(null);
+            HideEnemyHUD();
+        }
+    }
     
     public void SetEnemyName(string name)
     {
@@ -166,6 +187,21 @@ public class HUDController : MonoBehaviour
             crosshairParts[1].color = new Color(0, 0, 0, 255);
         }
         enemyName.text = name;
+    }
+
+    public void SetEnemyHUD(GameObject enemy)
+    {
+        if(lastEnemy != null) lastEnemy.GetComponentInChildren<Camera>().targetTexture = null;
+        //We need to save a ref to last enemy in order to disable output of its camera to texture
+        lastEnemy = enemy;
+        enemyHP.fillAmount = lastEnemy.GetComponent<Enemy>().CurrHp/lastEnemy.GetComponent<Enemy>().MaxHp;
+        lastEnemy.GetComponentInChildren<Camera>().targetTexture = (RenderTexture)enemyPortrait.texture;
+        enemyHUD.SetActive(true);
+    }
+
+    public void HideEnemyHUD()
+    {
+        enemyHUD.SetActive(false);
     }
 
     void OnHUDChanged()
