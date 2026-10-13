@@ -84,14 +84,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] GameObject cameraObj;
 
     //Local variables/auxiliary
-    private Vector3 cameraAimPos = new Vector3(0,0, 0.80f);
-    private Vector3 cameraNeutralPos = new Vector3(0.62f,-0.016f,0.93f);
+    private Vector3 cameraAimPos = new Vector3(0, 0.96f, 0.80f);
+    
+    private Vector3 cameraNeutralPos = new Vector3(0.62f, 0.98f, 0.93f);
     float elapsed;
     float duration;
     bool justTriedAimEnemy = false;
     bool canSnap = false;
     float currRingVal = 0f;
-    GameObject currEnemyOnHUD;
 
     //Player events
     public static event Action<GameObject> OnEnemyAim;
