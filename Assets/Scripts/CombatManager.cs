@@ -53,7 +53,7 @@ public class CombatManager : MonoBehaviour
         minigameArea.color = c;
 
         //load beforehand
-        memImage = Resources.Load<Sprite>("MemoryImages/"+currMem.displayName);
+        memImage = mem.sprite;
         yield return new WaitForSecondsRealtime(0.5f);
 
         yield return StartCoroutine(DoIntroAnimation());
