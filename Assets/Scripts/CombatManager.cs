@@ -8,7 +8,6 @@ public class CombatManager : MonoBehaviour
     [SerializeField] GameObject background;
     [SerializeField] GameObject minigameFrame;
     [SerializeField] Image minigameArea;
-    [SerializeField] GameObject intro;
     public static CombatManager I;
     //Attributes
     float minigameDuration = 5f;
@@ -23,8 +22,6 @@ public class CombatManager : MonoBehaviour
 
     //Assets to be used
     Sprite memImage;
-    VideoClip clip;
-
 
     void Awake()
     {
@@ -48,17 +45,15 @@ public class CombatManager : MonoBehaviour
         background.SetActive(true);
         minigameFrame.SetActive(true);
 
-        //before intro anim, clear last values
-        intro.GetComponent<VideoPlayer>().clip = null;
+        //clear last values
         minigameArea.sprite = null;
-        //before the image appear animation, alpha will be 0 fist time, so we need to set to 1
+        //before the image appear animation, alpha will be 0 first time, so we need to set to 1
         Color c = minigameArea.color;
         c.a = 1f;
         minigameArea.color = c;
 
         //load beforehand
         memImage = Resources.Load<Sprite>("MemoryImages/"+currMem.displayName);
-        clip = Resources.Load<VideoClip>("MemoryIntros/"+currMem.displayName);
         yield return new WaitForSecondsRealtime(0.5f);
 
         yield return StartCoroutine(DoIntroAnimation());
@@ -102,14 +97,6 @@ public class CombatManager : MonoBehaviour
         }
         yield return StartCoroutine(ChangeAlphaImg(minigameArea, Adjust.Increase));
         yield return new WaitForSecondsRealtime(0.5f);
-
-        if (clip != null)
-        {
-            intro.GetComponent<VideoPlayer>().clip = clip;
-            intro.GetComponent<VideoPlayer>().Play();
-        }
-        minigameArea.sprite = null;
-        yield return StartCoroutine(ChangeAlphaImg(intro.GetComponent<RawImage>(), Adjust.Decrease));
     }
 
     IEnumerator ExecuteMinigame()
@@ -117,26 +104,23 @@ public class CombatManager : MonoBehaviour
         currMinigame = Instantiate(currMem.minigame, minigameArea.transform);
         currMinigame.Begin();
         yield return new WaitForSecondsRealtime(minigameDuration);
-        currMinigame.End();
+        float dmg = currMinigame.End();
         Destroy(currMinigame.gameObject);
-        End();
+        End(dmg);
     }
 
-    void End()
+    void End(float dmg)
     {
         background.SetActive(false);
         minigameFrame.SetActive(false);
         GameManager.I.ChangeMode(GameManager.GameStates.Overworld);
 
-        Color currColor = intro.GetComponent<RawImage>().color;
-        currColor.a = 0f;
-        intro.GetComponent<RawImage>().color = currColor;
-        ApplyDmg();
+        ApplyDmg(dmg);
     }
 
-    void ApplyDmg()
+    void ApplyDmg(float dmg)
     {
-        currEnemy.TakeDamage(10f);
+        currEnemy.TakeDamage(dmg);
     }
 
 

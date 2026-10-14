@@ -34,8 +34,13 @@ public class ClickMinigame : Minigame
         
     }
 
-    public override void End()
+    public override float End()
     {
-        
+        return 10f;
+    }
+
+    protected override float ScoreToDmg()
+    {
+        return 10f;
     }
 }
