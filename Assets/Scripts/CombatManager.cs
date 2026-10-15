@@ -1,16 +1,19 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Video;
 
 public class CombatManager : MonoBehaviour
 {
     [SerializeField] GameObject background;
     [SerializeField] GameObject minigameFrame;
     [SerializeField] Image minigameArea;
+    [SerializeField] GameObject introText;
+    [SerializeField] GameObject introBackground;
     public static CombatManager I;
     //Attributes
-    float minigameDuration = 5f;
+    float minigameDuration;
+    float tutorialMsgDuration = 2f;
 
     //Auxiliary
     enum Adjust { Increase, Decrease }
@@ -47,16 +50,13 @@ public class CombatManager : MonoBehaviour
 
         //clear last values
         minigameArea.sprite = null;
-        //before the image appear animation, alpha will be 0 first time, so we need to set to 1
-        Color c = minigameArea.color;
-        c.a = 1f;
-        minigameArea.color = c;
 
         //load beforehand
         memImage = mem.sprite;
         yield return new WaitForSecondsRealtime(0.5f);
 
         yield return StartCoroutine(DoIntroAnimation());
+
         StartCoroutine(ExecuteMinigame());
     }
 
@@ -102,11 +102,24 @@ public class CombatManager : MonoBehaviour
     IEnumerator ExecuteMinigame()
     {
         currMinigame = Instantiate(currMem.minigame, minigameArea.transform);
+        //after loading minigame, show intro text (tutorial)
+        yield return StartCoroutine(ShowIntroText());
         currMinigame.Begin();
-        yield return new WaitForSecondsRealtime(minigameDuration);
+        yield return new WaitForSecondsRealtime(currMinigame.Duration);
         float dmg = currMinigame.End();
         Destroy(currMinigame.gameObject);
         End(dmg);
+    }
+
+    IEnumerator ShowIntroText()
+    {
+        introBackground.SetActive(true);
+        introText.SetActive(true);
+        introText.GetComponent<TextMeshProUGUI>().text = currMinigame.TutorialMsg;
+        yield return new WaitForSecondsRealtime(tutorialMsgDuration);
+        introText.GetComponent<TextMeshProUGUI>().text = null;
+        introText.SetActive(false);
+        introBackground.SetActive(false);
     }
 
     void End(float dmg)
