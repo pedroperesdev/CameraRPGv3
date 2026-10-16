@@ -88,7 +88,7 @@ Animator:
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 9100000, guid: bebac8024b47bf843a64a94a1cf2b769, type: 2}
   m_CullingMode: 0
-  m_UpdateMode: 0
+  m_UpdateMode: 2
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
@@ -460,7 +460,7 @@ MonoBehaviour:
   birthdayStart: {fileID: 8300000, guid: 02e39f1a9a2bb6a46a20dc30982a2ce5, type: 3}
   birthdaySuccess: {fileID: 8300000, guid: 14ac6f783f91e1c4ca1995993f762c3a, type: 3}
   blowCandle: {fileID: 8300000, guid: d2f6ef3fc9a438c4c9bfb9b8272482ee, type: 3}
-  birthdayFail: {fileID: 0}
+  birthdayFail: {fileID: 8300000, guid: e15d0fdd1aef0ac49b5f3894d0d4b342, type: 3}
 --- !u!1 &8043105029908420661
 GameObject:
   m_ObjectHideFlags: 0

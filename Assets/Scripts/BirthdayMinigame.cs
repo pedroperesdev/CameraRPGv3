@@ -23,7 +23,7 @@ public class BirthdayMinigame : Minigame
     [SerializeField] AudioClip birthdayFail;
     private float birthdayStartDuration = 3.72f;
     private float birthdaySuccessDuration = 4.44f;
-    private float birthdayFailDuration = 3f;
+    private float birthdayFailDuration = 1.31f;
 
 
     //Minigame specific
@@ -97,13 +97,14 @@ public class BirthdayMinigame : Minigame
         if (success)
         {
             AudioManager.I.PlaySound(birthdaySuccess);
+            StartCoroutine(ShakePeople());
             yield return new WaitForSecondsRealtime(birthdaySuccessDuration);
         }
         else
         {
-            //AudioManager.I.PlaySound(birthdayFail);
+            AudioManager.I.PlaySound(birthdayFail);
             shocked.SetActive(true);
-            yield return new WaitForSecondsRealtime(2f);
+            yield return new WaitForSecondsRealtime(birthdayFailDuration);
         }
     }
 
