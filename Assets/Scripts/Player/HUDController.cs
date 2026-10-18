@@ -10,6 +10,7 @@ public class HUDController : MonoBehaviour
 
     //PlayerHUD components
     [SerializeField] GameObject playerHUD;
+    [SerializeField] Image staminaBar;
     [SerializeField] GameObject[] slotsUI;
     [SerializeField] TextMeshProUGUI enemyName = null;
     [SerializeField] GameObject crosshair;
@@ -49,6 +50,7 @@ public class HUDController : MonoBehaviour
 
     void Awake()
     {
+        staminaBar.fillAmount = 1;
     }
 
     void OnEnable()
@@ -60,6 +62,7 @@ public class HUDController : MonoBehaviour
         PlayerController.OnHoverInteractable += SetHoverInfo;
         PlayerController.OnPlayerWarning += ShowPlayerWarning;
         PlayerController.OnCameraRingIncrease += SetCameraRingFill;
+        PlayerController.OnStaminaChange += UpdateStaminaBar;
     }
 
     void OnDisable()
@@ -71,6 +74,7 @@ public class HUDController : MonoBehaviour
         PlayerController.OnHoverInteractable -= SetHoverInfo;
         PlayerController.OnPlayerWarning -= ShowPlayerWarning;
         PlayerController.OnCameraRingIncrease -= SetCameraRingFill;
+        PlayerController.OnStaminaChange -= UpdateStaminaBar;
     }
 
     void Start()
@@ -84,6 +88,12 @@ public class HUDController : MonoBehaviour
     void Update()
     {
         
+    }
+
+    void UpdateStaminaBar(float newVal)
+    {
+        staminaBar.fillAmount = newVal;
+        if(newVal < 0.3) staminaBar.color = Color.gray; else staminaBar.color = Color.white;
     }
 
     void UseMemory(int newUses)

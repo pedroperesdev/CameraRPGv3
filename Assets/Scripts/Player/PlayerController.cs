@@ -17,6 +17,7 @@ public class PlayerController : MonoBehaviour
     public static Transform PlayerTransform;
 
     //Components
+    [SerializeField] GameObject CameraGroup;
     private CharacterController cc;
     private Camera cam;
 
@@ -54,6 +55,7 @@ public class PlayerController : MonoBehaviour
 
     //Player States. Maybe state machine in the future?
     bool isAiming { get; set; } = false;
+    bool isSprinting { get; set; } = false;
     
     //Player State Getters
     public bool Aiming => isAiming;
@@ -61,6 +63,8 @@ public class PlayerController : MonoBehaviour
     //Actions/Inputs
     private InputAction moveAction;
     private InputAction lookAction;
+    private InputAction sprintAction;
+    private InputAction crouchAction;
     private InputAction aimAction;
     private InputAction shootAction;
     private InputAction[] selectSlotActions;
@@ -70,9 +74,22 @@ public class PlayerController : MonoBehaviour
 
     [Header("Player values")]
     public float lookSensitivity = 0.08f;
+    private float maxCamDelta = 85f;
+    private float minCamDelta = -85f;
+    private float pitch = 0f;
     private float g = -9.8f;
     private float vertVel = 0;
-    private float movSpeed = 5f;
+    //Speed-related
+    private float crouchMovSpeed = 3f;
+    private float normalMovSpeed = 5f;
+    private float sprintMovSpeed = 8f;
+    private float currMovSpeed;
+    //Stamina-related
+    private float currStamina;
+    private float recoveryLimit = 30f;
+    private float maxStamina = 100f;
+    private float staminaRdcSpeed = 50f; //How fast stamina is spent
+    private float staminaIncSpeed = 25f; //How fast stamina is regained
     private GameObject currEnemy = null;
     private float minDistCamRay = 1f;
     private float maxDistCamRay = 14f;
@@ -91,10 +108,13 @@ public class PlayerController : MonoBehaviour
     float duration;
     bool justTriedAimEnemy = false;
     bool canSnap = false;
+    bool canSprint = true;
+    bool sprintNeedsRelease = false;
     float currRingVal = 0f;
 
     //Player events
     public static event Action<GameObject> OnEnemyAim;
+    public static event Action<float> OnStaminaChange;
     public static event Action<PlayerHoverInfo> OnHoverInteractable;
     public static event Action<PlayerWarnings> OnPlayerWarning;
     public static event Action<float> OnCameraRingIncrease;
@@ -106,6 +126,8 @@ public class PlayerController : MonoBehaviour
         //Actions/Inputs
         moveAction = InputSystem.actions.FindAction("Move");
         lookAction = InputSystem.actions.FindAction("Look");
+        sprintAction = InputSystem.actions.FindAction("Sprint");
+        crouchAction = InputSystem.actions.FindAction("Crouch");
         interactAction = InputSystem.actions.FindAction("Interact");
         aimAction = InputSystem.actions.FindAction("Aim");
         shootAction = InputSystem.actions.FindAction("Shoot");
@@ -121,6 +143,10 @@ public class PlayerController : MonoBehaviour
         cam = GetComponentInChildren<Camera>();
         hudc = GetComponent<HUDController>();
         mi = GetComponent<MemoryInventory>();
+
+        //Set initial values
+        currMovSpeed = normalMovSpeed;
+        currStamina = maxStamina;
     }
 
     void Update()
@@ -129,21 +155,30 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
-        
+        Debug.Log(cc.isGrounded);
         Vector3 resultingMov = Vector3.zero;
         //Input
         Vector2 lookInput = lookAction.ReadValue<Vector2>();
         Vector2 moveInput = moveAction.ReadValue<Vector2>();
         
+        CheckSprint();
+        if (!isSprinting)
+        {
+            RegenStamina();
+            CheckCrouch();
+        }
         if(moveInput != Vector2.zero) 
         {
             Vector2 inputNorm = moveInput.normalized;
-            resultingMov = cam.transform.forward * inputNorm.y * movSpeed * Time.deltaTime + cam.transform.right * inputNorm.x * movSpeed * Time.deltaTime;
+            resultingMov = cam.transform.forward * inputNorm.y * currMovSpeed * Time.deltaTime + cam.transform.right * inputNorm.x * currMovSpeed * Time.deltaTime;
         }
         if(lookInput != Vector2.zero) 
         {
+            pitch -= lookInput.y * lookSensitivity;
+            pitch = Mathf.Clamp(pitch, minCamDelta, maxCamDelta);
+
             Vector3 eulerAngle = transform.eulerAngles;
-            transform.rotation = Quaternion.Euler(eulerAngle.x - lookInput.y * lookSensitivity, eulerAngle.y + lookInput.x * lookSensitivity, 0f);
+            transform.rotation = Quaternion.Euler(pitch, eulerAngle.y + lookInput.x * lookSensitivity, 0f);
         }
         CheckForInteraction();
         CheckForSlotChange();
@@ -155,9 +190,60 @@ public class PlayerController : MonoBehaviour
         }
         else
         {
-            resultingMov.y = 0; vertVel = 0;
+            //apply just some negative
+            resultingMov.y = -0.1f; vertVel = 0;
         }
         cc.Move(resultingMov);
+    }
+
+    void CheckSprint()
+    {
+        if (!sprintAction.IsPressed()) sprintNeedsRelease = false;  
+        if(!isAiming && cc.isGrounded && sprintAction.IsPressed() && canSprint && !sprintNeedsRelease)
+        {
+            currStamina -= Time.deltaTime * staminaRdcSpeed;
+            if(currStamina < 0) currStamina = 0;
+            OnStaminaChange?.Invoke(currStamina/maxStamina);
+            currMovSpeed = sprintMovSpeed;
+            isSprinting = true;
+            if(currStamina == 0) {
+                EnterRecovery();
+            }
+        }
+        else if(sprintAction.WasReleasedThisFrame()) {
+            if(currStamina < recoveryLimit) {
+                EnterRecovery();
+            }
+            currMovSpeed = normalMovSpeed;
+            isSprinting = false;
+        }
+    }
+
+    void CheckCrouch()
+    {
+        if(!isAiming && cc.isGrounded && crouchAction.IsPressed())
+        {
+            currMovSpeed = crouchMovSpeed;
+        }
+        else if(crouchAction.WasReleasedThisFrame()) currMovSpeed = normalMovSpeed;
+    }
+
+    void RegenStamina()
+    {
+        if(currStamina < maxStamina)
+        {
+            currStamina += staminaIncSpeed * Time.deltaTime;
+            OnStaminaChange?.Invoke(currStamina/maxStamina);
+            if(currStamina >= recoveryLimit) canSprint = true;
+        }
+    }
+
+    void EnterRecovery()
+    {
+        canSprint = false;
+        currMovSpeed = normalMovSpeed;
+        isSprinting = false;
+        sprintNeedsRelease = true;
     }
 
     void CheckForInteraction()
