@@ -28,7 +28,7 @@ public class HUDController : MonoBehaviour
     GameObject activeSlot;
     Image[] crosshairParts = new Image[2];
     GameObject lastEnemy = null;
-
+    bool staminaBarHidden = true;
     float currAlpha;
     float targetAlpha;
     float transTime = 0.1f;
@@ -92,8 +92,19 @@ public class HUDController : MonoBehaviour
 
     void UpdateStaminaBar(float newVal)
     {
+        if (staminaBarHidden)
+        {
+            staminaBar.gameObject.SetActive(true);
+            staminaBarHidden = false;
+        } 
         staminaBar.fillAmount = newVal;
         if(newVal < 0.3) staminaBar.color = Color.gray; else staminaBar.color = Color.white;
+        //Hide if full, avoid per-frame
+        Debug.Log(newVal);
+        if(newVal == 1f) {
+            staminaBarHidden = true;
+            staminaBar.gameObject.SetActive(false);
+        }
     }
 
     void UseMemory(int newUses)

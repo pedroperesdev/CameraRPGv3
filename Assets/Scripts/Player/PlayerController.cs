@@ -233,6 +233,8 @@ public class PlayerController : MonoBehaviour
         if(currStamina < maxStamina)
         {
             currStamina += staminaIncSpeed * Time.deltaTime;
+            //avoid overflow
+            if(currStamina >= maxStamina) currStamina = maxStamina;
             OnStaminaChange?.Invoke(currStamina/maxStamina);
             if(currStamina >= recoveryLimit) canSprint = true;
         }
