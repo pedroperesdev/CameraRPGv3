@@ -27,7 +27,7 @@ public class BirthdayMinigame : Minigame
     //Minigame specific
     private const string msg = "Blow the candles at the right time";
     private const float duration = 9f;
-    private const float successWindow = 0.5f;
+    private const float successWindow = 0.4f;
 
 
     //Auxiliary
@@ -104,6 +104,7 @@ public class BirthdayMinigame : Minigame
             if(!spentChance) {
                 spentChance = true;
                 PlayFailure();
+                EndEarly();
             }
         }
     }
