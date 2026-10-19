@@ -22,6 +22,7 @@ public class CombatManager : MonoBehaviour
     Enemy currEnemy;
     float decreaseSpeed = 1f;
     float increaseSpeed = 0.75f;
+    Coroutine MinigameExecCorout;
 
     //Assets to be used
     Sprite memImage;
@@ -57,7 +58,7 @@ public class CombatManager : MonoBehaviour
 
         yield return StartCoroutine(DoIntroAnimation());
 
-        StartCoroutine(ExecuteMinigame());
+        MinigameExecCorout = StartCoroutine(ExecuteMinigame());
     }
 
     IEnumerator ChangeAlphaImg(Graphic gr, Adjust adj)
@@ -102,6 +103,7 @@ public class CombatManager : MonoBehaviour
     IEnumerator ExecuteMinigame()
     {
         currMinigame = Instantiate(currMem.minigame, minigameArea.transform);
+        currMinigame.OnEndEarly += () => StartCoroutine(StopCoroutineAndEndEarly());
         //after loading minigame, show intro text (tutorial)
         yield return StartCoroutine(ShowIntroText());
         currMinigame.Begin();
@@ -109,6 +111,17 @@ public class CombatManager : MonoBehaviour
         float dmg = currMinigame.End();
         Destroy(currMinigame.gameObject);
         End(dmg);
+    }
+
+
+    IEnumerator StopCoroutineAndEndEarly()
+    {
+        yield return new WaitForSecondsRealtime(2f);
+        if(MinigameExecCorout != null) StopCoroutine(MinigameExecCorout);
+        float dmg = currMinigame.End();
+        Destroy(currMinigame.gameObject);
+        End(dmg);
+        currMinigame.OnEndEarly -= () => StartCoroutine(StopCoroutineAndEndEarly());
     }
 
     IEnumerator ShowIntroText()
@@ -124,6 +137,7 @@ public class CombatManager : MonoBehaviour
 
     void End(float dmg)
     {
+        AudioManager.I.StopSfxSounds();
         background.SetActive(false);
         minigameFrame.SetActive(false);
         GameManager.I.ChangeMode(GameManager.GameStates.Overworld);

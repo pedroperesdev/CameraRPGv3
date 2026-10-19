@@ -22,24 +22,25 @@ public class BirthdayMinigame : Minigame
     [SerializeField] AudioClip blowCandle;
     [SerializeField] AudioClip birthdayFail;
     private float birthdayStartDuration = 3.72f;
-    private float birthdaySuccessDuration = 4.44f;
-    private float birthdayFailDuration = 1.31f;
 
 
     //Minigame specific
     private const string msg = "Blow the candles at the right time";
-    private const float duration = 9.16f;
+    private const float duration = 9f;
+    private const float successWindow = 0.5f;
 
 
     //Auxiliary
     private InputAction clickAction;
-    private bool canClick = false;
+    private bool insideClickWindow = false;
     private bool success = false;
+    private bool spentChance = false;
     private float dmgPerHit = 10;
     private Vector2 peopleInitialPos;
     private float elapsed = 0f;
     private float shakeAmplitude = 2f;
     private float shakeSpeed = 10f;
+    Coroutine shaking;
 
 
     void Awake()
@@ -53,19 +54,20 @@ public class BirthdayMinigame : Minigame
 
     void Update()
     {
-        if(canClick && clickAction.WasPressedThisFrame())
+        if(!insideClickWindow && clickAction.WasPressedThisFrame() && !spentChance)
+        {
+            spentChance = true;
+            PlayFailure();
+            BlowCandles();
+            EndEarly();
+        }
+        else if(insideClickWindow && clickAction.WasPressedThisFrame() && !spentChance)
         {
             score += 1;
             success = true;
-            canClick = false;
+            spentChance = true;
             BlowCandles();
         }
-        else if(clickAction.WasPressedThisFrame())
-        {
-
-            canClick = false;
-        }
-
     }
 
     void BlowCandles()
@@ -82,30 +84,42 @@ public class BirthdayMinigame : Minigame
 
     IEnumerator ListenAndBlow()
     {
-        Coroutine shaking = StartCoroutine(ShakePeople());
+        shaking = StartCoroutine(ShakePeople());
         AudioManager.I.PlaySound(birthdayStart);
         yield return new WaitForSecondsRealtime(birthdayStartDuration);
 
         StopCoroutine(shaking);
         people.GetComponent<RectTransform>().anchoredPosition = peopleInitialPos;
         blowText.SetActive(true);
-        canClick = true;
-        yield return new WaitForSecondsRealtime(1f);
-
+        insideClickWindow = true;
+        yield return new WaitForSecondsRealtime(successWindow);
         blowText.SetActive(false);
-        canClick = false;
+        insideClickWindow = false;
         if (success)
         {
-            AudioManager.I.PlaySound(birthdaySuccess);
-            StartCoroutine(ShakePeople());
-            yield return new WaitForSecondsRealtime(birthdaySuccessDuration);
+            PlaySuccess();
         }
         else
         {
-            AudioManager.I.PlaySound(birthdayFail);
-            shocked.SetActive(true);
-            yield return new WaitForSecondsRealtime(birthdayFailDuration);
+            if(!spentChance) {
+                spentChance = true;
+                PlayFailure();
+            }
         }
+    }
+
+    void PlaySuccess()
+    {
+        AudioManager.I.PlaySound(birthdaySuccess);
+        StartCoroutine(ShakePeople());
+    }
+
+    void PlayFailure()
+    {
+        StopCoroutine(shaking);
+        AudioManager.I.StopSfxSounds();
+        AudioManager.I.PlaySound(birthdayFail);
+        shocked.SetActive(true);
     }
 
     IEnumerator ShakePeople()
