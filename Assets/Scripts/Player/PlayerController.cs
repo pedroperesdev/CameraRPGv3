@@ -199,7 +199,7 @@ public class PlayerController : MonoBehaviour
     void CheckSprint()
     {
         if (!sprintAction.IsPressed()) sprintNeedsRelease = false;  
-        if(!isAiming && cc.isGrounded && sprintAction.IsPressed() && canSprint && !sprintNeedsRelease)
+        if(!isAiming && cc.isGrounded && sprintAction.IsPressed() && canSprint && !sprintNeedsRelease && !isAiming)
         {
             currStamina -= Time.deltaTime * staminaRdcSpeed;
             if(currStamina < 0) currStamina = 0;
@@ -211,12 +211,17 @@ public class PlayerController : MonoBehaviour
             }
         }
         else if(sprintAction.WasReleasedThisFrame()) {
-            if(currStamina < recoveryLimit) {
-                EnterRecovery();
-            }
-            currMovSpeed = normalMovSpeed;
-            isSprinting = false;
+            StopSprintAndEnterRecovery();
         }
+    }
+
+    void StopSprintAndEnterRecovery()
+    {
+        if(currStamina < recoveryLimit) {
+            EnterRecovery();
+        }
+        currMovSpeed = normalMovSpeed;
+        isSprinting = false;
     }
 
     void CheckCrouch()
@@ -326,6 +331,7 @@ public class PlayerController : MonoBehaviour
         if(aimAction.IsPressed())
         {
             isAiming = true;
+            StopSprintAndEnterRecovery();
             //logic like be able to take photo, show camera borders etc, actual camera snap behavior
             if(Physics.Raycast(cameraObj.transform.position + cam.transform.forward*minDistCamRay, cam.transform.forward, out RaycastHit hit, maxDistCamRay))
             {
@@ -369,6 +375,7 @@ public class PlayerController : MonoBehaviour
                         {
                             OnPlayerWarning?.Invoke(PlayerWarnings.NoMemoryEquipped);
                         }
+                        TryClearCameraRing();
                     }
                 }
                 else
@@ -376,8 +383,6 @@ public class PlayerController : MonoBehaviour
                     if(currEnemy != null)
                     {
                         TryClearCameraRing();
-                        currEnemy = null;
-                        OnEnemyAim?.Invoke(null);
                     }
                 }
             }
@@ -386,8 +391,6 @@ public class PlayerController : MonoBehaviour
                 if(currEnemy != null)
                 {
                     TryClearCameraRing();
-                    currEnemy = null;
-                    OnEnemyAim?.Invoke(null);
                 }
             }
         }
@@ -396,8 +399,6 @@ public class PlayerController : MonoBehaviour
             TryClearCameraRing();
             CurrAnimState = AnimationStates.StopAim;
             isAiming = false;
-            currEnemy = null;
-            OnEnemyAim?.Invoke(null);
             hudc.SetPlayerHUD();
         }
     }
@@ -410,6 +411,8 @@ public class PlayerController : MonoBehaviour
             currRingVal = 0f;
             OnCameraRingIncrease?.Invoke(currRingVal);
             justTriedAimEnemy = false;
+            currEnemy = null;
+            OnEnemyAim?.Invoke(null);
         }
     }
 
