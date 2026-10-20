@@ -114,9 +114,9 @@ public class PlayerController : MonoBehaviour
     float startingWobblePos;
     float wobbleElapsed = 0f;
     float wobbleFreq;
-    float wobbleAmp = 0.1f;
+    float wobbleAmp = 0.08f;
     float wobbleFreqWalk = 1f;
-    float wobbleFreqSprint = 1.5f;
+    float wobbleFreqSprint = 2f;
     Coroutine stoppingWobble;
     
 
@@ -235,7 +235,6 @@ public class PlayerController : MonoBehaviour
             EnterRecovery();
         }
         currMovSpeed = normalMovSpeed;
-        wobbleFreq = wobbleFreqWalk;
         isSprinting = false;
     }
 
@@ -286,6 +285,7 @@ public class PlayerController : MonoBehaviour
     void EnterRecovery()
     {
         canSprint = false;
+        wobbleFreq = wobbleFreqWalk;
         currMovSpeed = normalMovSpeed;
         isSprinting = false;
         sprintNeedsRelease = true;
