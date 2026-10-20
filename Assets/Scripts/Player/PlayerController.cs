@@ -17,7 +17,8 @@ public class PlayerController : MonoBehaviour
     public static Transform PlayerTransform;
 
     //Components
-    [SerializeField] GameObject cameraGroup;
+    [SerializeField] GameObject cameraGroupParent;
+    [SerializeField] GameObject cameraGroupWobble;
     private CharacterController cc;
     private Camera cam;
 
@@ -30,10 +31,10 @@ public class PlayerController : MonoBehaviour
     private enum AnimationStates { None, StartAim, StopAim };
 
     //Enum for possible interactable hover messages
-    public enum PlayerHoverInfo {None, PickUp};
+    public enum PlayerHoverInfo { None, PickUp };
 
     //Enum for possible warnings that can appear on HUD
-    public enum PlayerWarnings {InventoryFull, NoMemoryEquipped};
+    public enum PlayerWarnings { InventoryFull, NoMemoryEquipped };
 
     //Current animation
     private Coroutine currAnimCorout;
@@ -74,6 +75,10 @@ public class PlayerController : MonoBehaviour
 
     [Header("Player values")]
     public float lookSensitivity = 0.08f;
+    private enum hitboxStates {Normal, Crouch};
+    public float normalHitboxHeight = 3f;
+    public float crouchHitboxHeight = 1.5f;
+
     private float maxCamDelta = 85f;
     private float minCamDelta = -85f;
     private float pitch = 0f;
@@ -115,8 +120,8 @@ public class PlayerController : MonoBehaviour
     float wobbleElapsed = 0f;
     float wobbleFreq;
     float wobbleAmp = 0.08f;
-    float wobbleFreqWalk = 1f;
-    float wobbleFreqSprint = 2f;
+    float wobbleFreqWalk = 0.8f;
+    float wobbleFreqSprint = 1.5f;
     Coroutine stoppingWobble;
     
 
@@ -149,7 +154,7 @@ public class PlayerController : MonoBehaviour
         PlayerTransform = gameObject.transform;
         cc = GetComponent<CharacterController>();
         cam = GetComponentInChildren<Camera>();
-        if(cam != null) startingWobblePos = cameraGroup.transform.localPosition.y;
+        if(cam != null) startingWobblePos = cameraGroupWobble.transform.localPosition.y;
         hudc = GetComponent<HUDController>();
         mi = GetComponent<MemoryInventory>();
 
@@ -214,6 +219,7 @@ public class PlayerController : MonoBehaviour
         if (!sprintAction.IsPressed()) sprintNeedsRelease = false;  
         if(!isAiming && cc.isGrounded && sprintAction.IsPressed() && canSprint && !sprintNeedsRelease && !isAiming)
         {
+            ChangeHitbox(hitboxStates.Normal);
             currStamina -= Time.deltaTime * staminaRdcSpeed;
             if(currStamina < 0) currStamina = 0;
             OnStaminaChange?.Invoke(currStamina/maxStamina);
@@ -243,8 +249,8 @@ public class PlayerController : MonoBehaviour
         if(stoppingWobble != null) StopCoroutine(StopWobbleSmoothly());
         wobbleElapsed += Time.deltaTime;
         float offset = Mathf.Sin(wobbleElapsed * wobbleFreq * 2 * Mathf.PI) * wobbleAmp;
-        Vector3 newCamPos = new Vector3(cameraGroup.transform.localPosition.x, startingWobblePos + offset, cameraGroup.transform.localPosition.z);
-        cameraGroup.transform.localPosition = newCamPos;
+        Vector3 newCamPos = new Vector3(cameraGroupWobble.transform.localPosition.x, startingWobblePos + offset, cameraGroupWobble.transform.localPosition.z);
+        cameraGroupWobble.transform.localPosition = newCamPos;
     }
 
     IEnumerator StopWobbleSmoothly()
@@ -252,11 +258,11 @@ public class PlayerController : MonoBehaviour
         wobbleElapsed = 0f;
         while (true)
         {
-            float newHeight = Mathf.Lerp(cameraGroup.transform.localPosition.y, startingWobblePos, 0.5f * Time.deltaTime);
+            float newHeight = Mathf.Lerp(cameraGroupWobble.transform.localPosition.y, startingWobblePos, 0.5f * Time.deltaTime);
             if(Mathf.Abs(newHeight - startingWobblePos) <= 0.01) yield break;
-            Vector3 newPos = cameraGroup.transform.localPosition;
+            Vector3 newPos = cameraGroupWobble.transform.localPosition;
             newPos.y = newHeight;
-            cameraGroup.transform.localPosition = newPos;
+            cameraGroupWobble.transform.localPosition = newPos;
             yield return null;
         }
     }
@@ -266,8 +272,41 @@ public class PlayerController : MonoBehaviour
         if(!isAiming && cc.isGrounded && crouchAction.IsPressed())
         {
             currMovSpeed = crouchMovSpeed;
+            ChangeHitbox(hitboxStates.Crouch);
         }
-        else if(crouchAction.WasReleasedThisFrame()) currMovSpeed = normalMovSpeed;
+        else if(crouchAction.WasReleasedThisFrame()) {
+            currMovSpeed = normalMovSpeed;
+            ChangeHitbox(hitboxStates.Normal);
+        }
+    }
+
+    void ChangeHitbox(hitboxStates hstate)
+    {
+        switch (hstate)
+        {
+            case hitboxStates.Normal:
+            {
+                cc.height = normalHitboxHeight;
+                Vector3 hitboxCenter = cc.center;
+                hitboxCenter.y = normalHitboxHeight/2;
+                cc.center = hitboxCenter;
+                Vector3 temp = cameraGroupParent.transform.localPosition;
+                temp.y = 0;
+                cameraGroupParent.transform.localPosition = temp;
+                break;
+            }
+            case hitboxStates.Crouch:
+            {
+                cc.height = crouchHitboxHeight;
+                Vector3 hitboxCenter = cc.center;
+                hitboxCenter.y = crouchHitboxHeight/2;
+                cc.center = hitboxCenter;
+                Vector3 temp = cameraGroupParent.transform.localPosition;
+                temp.y = -1.5f;
+                cameraGroupParent.transform.localPosition = temp;
+                break;
+            }
+        }
     }
 
     void RegenStamina()
