@@ -10327,7 +10327,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e9a580861f2039c468dcc25839c0eee1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  CameraGroup: {fileID: 806782141}
+  cameraGroup: {fileID: 806782141}
   lookSensitivity: 0.08
   cameraObj: {fileID: 124420833}
 --- !u!114 &789850911

@@ -24,7 +24,6 @@ public class ClickMinigame : Minigame
         }
         if(currClicks >= targetClicks)
         {
-            Debug.Log("completed!");
             //emit event to end early?
         }
     }

@@ -17,7 +17,7 @@ public class PlayerController : MonoBehaviour
     public static Transform PlayerTransform;
 
     //Components
-    [SerializeField] GameObject CameraGroup;
+    [SerializeField] GameObject cameraGroup;
     private CharacterController cc;
     private Camera cam;
 
@@ -111,6 +111,14 @@ public class PlayerController : MonoBehaviour
     bool canSprint = true;
     bool sprintNeedsRelease = false;
     float currRingVal = 0f;
+    float startingWobblePos;
+    float wobbleElapsed = 0f;
+    float wobbleFreq;
+    float wobbleAmp = 0.1f;
+    float wobbleFreqWalk = 1f;
+    float wobbleFreqSprint = 1.5f;
+    Coroutine stoppingWobble;
+    
 
     //Player events
     public static event Action<GameObject> OnEnemyAim;
@@ -141,12 +149,14 @@ public class PlayerController : MonoBehaviour
         PlayerTransform = gameObject.transform;
         cc = GetComponent<CharacterController>();
         cam = GetComponentInChildren<Camera>();
+        if(cam != null) startingWobblePos = cameraGroup.transform.localPosition.y;
         hudc = GetComponent<HUDController>();
         mi = GetComponent<MemoryInventory>();
 
         //Set initial values
         currMovSpeed = normalMovSpeed;
         currStamina = maxStamina;
+        wobbleFreq = wobbleFreqWalk;
     }
 
     void Update()
@@ -155,7 +165,6 @@ public class PlayerController : MonoBehaviour
         {
             return;
         }
-        Debug.Log(cc.isGrounded);
         Vector3 resultingMov = Vector3.zero;
         //Input
         Vector2 lookInput = lookAction.ReadValue<Vector2>();
@@ -171,6 +180,10 @@ public class PlayerController : MonoBehaviour
         {
             Vector2 inputNorm = moveInput.normalized;
             resultingMov = cam.transform.forward * inputNorm.y * currMovSpeed * Time.deltaTime + cam.transform.right * inputNorm.x * currMovSpeed * Time.deltaTime;
+            WobbleCamera();
+        }
+        if(moveInput == Vector2.zero) {
+            stoppingWobble = StartCoroutine(StopWobbleSmoothly());
         }
         if(lookInput != Vector2.zero) 
         {
@@ -204,6 +217,7 @@ public class PlayerController : MonoBehaviour
             currStamina -= Time.deltaTime * staminaRdcSpeed;
             if(currStamina < 0) currStamina = 0;
             OnStaminaChange?.Invoke(currStamina/maxStamina);
+            wobbleFreq = wobbleFreqSprint;
             currMovSpeed = sprintMovSpeed;
             isSprinting = true;
             if(currStamina == 0) {
@@ -221,7 +235,31 @@ public class PlayerController : MonoBehaviour
             EnterRecovery();
         }
         currMovSpeed = normalMovSpeed;
+        wobbleFreq = wobbleFreqWalk;
         isSprinting = false;
+    }
+
+    void WobbleCamera()
+    {
+        if(stoppingWobble != null) StopCoroutine(StopWobbleSmoothly());
+        wobbleElapsed += Time.deltaTime;
+        float offset = Mathf.Sin(wobbleElapsed * wobbleFreq * 2 * Mathf.PI) * wobbleAmp;
+        Vector3 newCamPos = new Vector3(cameraGroup.transform.localPosition.x, startingWobblePos + offset, cameraGroup.transform.localPosition.z);
+        cameraGroup.transform.localPosition = newCamPos;
+    }
+
+    IEnumerator StopWobbleSmoothly()
+    {
+        wobbleElapsed = 0f;
+        while (true)
+        {
+            float newHeight = Mathf.Lerp(cameraGroup.transform.localPosition.y, startingWobblePos, 0.5f * Time.deltaTime);
+            if(Mathf.Abs(newHeight - startingWobblePos) <= 0.01) yield break;
+            Vector3 newPos = cameraGroup.transform.localPosition;
+            newPos.y = newHeight;
+            cameraGroup.transform.localPosition = newPos;
+            yield return null;
+        }
     }
 
     void CheckCrouch()

@@ -100,7 +100,6 @@ public class HUDController : MonoBehaviour
         staminaBar.fillAmount = newVal;
         if(newVal < 0.3) staminaBar.color = Color.gray; else staminaBar.color = Color.white;
         //Hide if full, avoid per-frame
-        Debug.Log(newVal);
         if(newVal == 1f) {
             staminaBarHidden = true;
             staminaBar.gameObject.SetActive(false);
