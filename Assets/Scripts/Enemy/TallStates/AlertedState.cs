@@ -1,7 +1,18 @@
+using System.Collections;
+using UnityEngine;
+
 public class AlertedState : TallState
 {
     public AlertedState(Tall enemyInstance) : base(enemyInstance) {}
-    public override void EnterState(){}
-    public override void UpdateState(){}
+    public override void EnterState()
+    {
+        TallInstance.NMA.enabled = false;
+        Debug.Log("alerted");
+        TallInstance.JumpOnce();
+    }
+    public override void UpdateState()
+    {
+        TallInstance.LookAtPlayer();
+    }
     public override void ExitState(){}
 }

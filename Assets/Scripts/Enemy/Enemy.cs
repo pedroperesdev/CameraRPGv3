@@ -1,4 +1,5 @@
 using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -8,7 +9,6 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     public string EnemyName;
     public float MaxHp;
     public float CurrHp {get; private set;}
-    public float AlertRadius = 10f;
     protected float speed = 2f;
 
     protected virtual void Awake()
@@ -32,6 +32,7 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     {
         Destroy(gameObject);
     }
+
 
     void Update()
     {

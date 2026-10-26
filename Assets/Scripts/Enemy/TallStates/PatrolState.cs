@@ -15,6 +15,11 @@ public class PatrolState : TallState
     }
     public override void UpdateState()
     {
+        //change to alerted if LOS + dist to player
+        if(TallInstance.IsAlerted()) {
+            TallInstance.ChangeState(TallInstance.Alerted);
+            return;
+        }
         if(!TallInstance.NMA.pathPending && TallInstance.NMA.remainingDistance <= TallInstance.NMA.stoppingDistance)
         {
             if(currentWaitingTime >= waitingTime)
