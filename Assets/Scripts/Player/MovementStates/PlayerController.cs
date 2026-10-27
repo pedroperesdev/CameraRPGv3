@@ -30,8 +30,10 @@ public class PlayerController : MonoBehaviour
     public static Transform PlayerTransform;
 
     //Components
+    [SerializeField] GameObject playerHead;
     [SerializeField] GameObject cameraGroupParent;
     [SerializeField] GameObject cameraGroupWobble;
+    public static GameObject PlayerHead {get; private set;}
     public GameObject CameraGroupParent => cameraGroupParent;
     public GameObject CameraGroupWobble => cameraGroupWobble;
     public CharacterController CC { get; private set; }
@@ -146,6 +148,8 @@ public class PlayerController : MonoBehaviour
 
     void Awake()
     {
+        PlayerHead = playerHead;
+
         //Init player states
         Idle = new IdleState(this);
         Walk = new WalkState(this);

@@ -11,6 +11,7 @@ public class HUDController : MonoBehaviour
     //PlayerHUD components
     [SerializeField] GameObject playerHUD;
     [SerializeField] Image staminaBar;
+    [SerializeField] Image healthBar;
     [SerializeField] GameObject[] slotsUI;
     [SerializeField] TextMeshProUGUI enemyName = null;
     [SerializeField] GameObject crosshair;
@@ -63,6 +64,7 @@ public class HUDController : MonoBehaviour
         PlayerController.OnPlayerWarning += ShowPlayerWarning;
         PlayerController.OnCameraRingIncrease += SetCameraRingFill;
         PlayerController.OnStaminaChange += UpdateStaminaBar;
+        PlayerHealth.OnHealthChange += UpdateHealthBar;
     }
 
     void OnDisable()
@@ -75,6 +77,7 @@ public class HUDController : MonoBehaviour
         PlayerController.OnPlayerWarning -= ShowPlayerWarning;
         PlayerController.OnCameraRingIncrease -= SetCameraRingFill;
         PlayerController.OnStaminaChange -= UpdateStaminaBar;
+        PlayerHealth.OnHealthChange -= UpdateHealthBar;
     }
 
     void Start()
@@ -88,6 +91,11 @@ public class HUDController : MonoBehaviour
     void Update()
     {
         
+    }
+
+    void UpdateHealthBar(float newVal)
+    {
+        healthBar.fillAmount = newVal;
     }
 
     void UpdateStaminaBar(float newVal)
