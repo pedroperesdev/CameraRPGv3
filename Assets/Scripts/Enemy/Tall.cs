@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class Tall : Enemy
 {
+    // Components
+    [SerializeField] Transform head; // Where raycast checks player 
+
+    // Patrol route points
     [SerializeField] private Transform patrolStart;
     [SerializeField] private Transform patrolEnd;
     public Transform PatrolStart => patrolStart;
@@ -15,8 +19,8 @@ public class Tall : Enemy
     public TallState CurrentState {get; private set;}
     private Rigidbody rb;
 
-    private float alertDistance = 10f;
-    private float alertAngleTolerance = 45f;
+    private float alertDistance = 15f;
+    private float alertAngleTolerance = 65f;
     private float jumpForce = 100f;
 
     protected override void Awake()
@@ -44,7 +48,7 @@ public class Tall : Enemy
     public bool IsAlerted()
     {
         //min dist + angle + raycast to check objects in between
-        if(IsCloseToPlayer() && IsPlayerInFOV())
+        if(IsCloseToPlayer() && IsPlayerInFOV() && IsPlayerInLOS())
         {
             return true;
         }
@@ -61,20 +65,26 @@ public class Tall : Enemy
         if(rb != null) rb.AddForce(Vector3.up * jumpForce);
     }
 
-        public bool IsCloseToPlayer()
+    Vector3 VectorToPlayer()
+    {
+        return PlayerController.PlayerTransform.position - head.transform.position;
+    }
+
+    bool IsCloseToPlayer()
     {
         return Vector3.Distance(PlayerController.PlayerTransform.position, transform.position) < alertDistance;
     }
 
-    Vector3 VectorToPlayer()
-    {
-        return PlayerController.PlayerTransform.position - transform.position;
-    }
-
-    public bool IsPlayerInFOV()
+    bool IsPlayerInFOV()
     {
         return Vector3.Angle(transform.forward, VectorToPlayer()) < alertAngleTolerance;
     }
+
+    bool IsPlayerInLOS()
+    {
+        return Physics.Raycast(head.position, VectorToPlayer(), out RaycastHit hit, alertDistance) && hit.collider.CompareTag("Player");
+    }
+
 
     public void LookAtPlayer()
     {
