@@ -11,6 +11,7 @@ public class PatrolState : TallState
     {
         currentWaitingTime = 0f;
         currentDest = TallInstance.PatrolStart;
+        TallInstance.SetPatrolSpeed();
         TallInstance.NMA.SetDestination(currentDest.position);
     }
     public override void UpdateState()

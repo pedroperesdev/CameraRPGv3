@@ -19,9 +19,13 @@ public class Tall : Enemy
     public TallState CurrentState {get; private set;}
     private Rigidbody rb;
 
+    // Parameters for this enemy subclass
     private float alertDistance = 15f;
     private float alertAngleTolerance = 65f;
     private float jumpForce = 100f;
+    private float timeBeforeChase = 1f;
+    private float patrolSpeed = 2.5f;
+    private float chaseSpeed = 5f;
 
     protected override void Awake()
     {
@@ -42,6 +46,16 @@ public class Tall : Enemy
         if(CurrentState != null) CurrentState.ExitState();
         CurrentState = state;
         CurrentState.EnterState(); 
+    }
+
+    public void SetPatrolSpeed()
+    {
+        NMA.speed = patrolSpeed;
+    }
+
+    public void SetChaseSpeed()
+    {
+        NMA.speed = chaseSpeed;
     }
 
     //Checks distance to player + direct line of sight
@@ -85,11 +99,22 @@ public class Tall : Enemy
         return Physics.Raycast(head.position, VectorToPlayer(), out RaycastHit hit, alertDistance) && hit.collider.CompareTag("Player");
     }
 
-
     public void LookAtPlayer()
     {
         Vector3 temp = VectorToPlayer();
         temp.y = 0;
         transform.forward = temp;
     }
+
+    public void WaitAndStartChase()
+    {
+        StartCoroutine(StartChase());
+    }
+
+    IEnumerator StartChase()
+    {
+        yield return new WaitForSeconds(timeBeforeChase);
+        ChangeState(Chase);
+    }
+
 }

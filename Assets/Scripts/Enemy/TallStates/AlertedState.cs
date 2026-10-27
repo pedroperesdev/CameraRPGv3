@@ -9,10 +9,14 @@ public class AlertedState : TallState
         TallInstance.NMA.enabled = false;
         Debug.Log("alerted");
         TallInstance.JumpOnce();
+        TallInstance.WaitAndStartChase();
     }
     public override void UpdateState()
     {
         TallInstance.LookAtPlayer();
     }
-    public override void ExitState(){}
+    public override void ExitState()
+    {
+        TallInstance.NMA.enabled = true;
+    }
 }

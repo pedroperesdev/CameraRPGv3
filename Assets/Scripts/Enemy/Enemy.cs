@@ -9,7 +9,6 @@ public abstract class Enemy : MonoBehaviour, IDamageable
     public string EnemyName;
     public float MaxHp;
     public float CurrHp {get; private set;}
-    protected float speed = 2f;
 
     protected virtual void Awake()
     {
