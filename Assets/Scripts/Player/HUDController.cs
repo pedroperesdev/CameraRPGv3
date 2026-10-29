@@ -338,6 +338,11 @@ public class HUDController : MonoBehaviour
                 infoText.text = "Press [E] to pick up";
                 break; 
             }
+            case PlayerController.PlayerHoverInfo.OpenContainer:
+            {
+                infoText.text = "Press [E] to open";
+                break; 
+            }
         }
     }
 }

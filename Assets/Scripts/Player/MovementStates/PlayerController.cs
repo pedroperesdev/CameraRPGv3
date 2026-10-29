@@ -48,7 +48,7 @@ public class PlayerController : MonoBehaviour
     public enum AnimationStates { None, StartAim, StopAim };
 
     //Enum for possible interactable hover messages
-    public enum PlayerHoverInfo { None, PickUp };
+    public enum PlayerHoverInfo { None, PickUp, OpenContainer };
 
 
     //Enum for possible warnings that can appear on HUD
@@ -119,7 +119,7 @@ public class PlayerController : MonoBehaviour
     public float CameraTimeUntilClick { get; private set; } = 1.5f;
 
     private int numberOfSlots = 6;
-    private float maxDistInteract = 2f;
+    private float maxDistInteract = 4f;
 
     //Player objects
     [SerializeField] GameObject cameraObj;
@@ -341,6 +341,18 @@ public class PlayerController : MonoBehaviour
                         //We treat error msgs on controller because its central point
                         OnPlayerWarning?.Invoke(PlayerWarnings.InventoryFull);
                     }
+                }
+            }
+            else if(hitInteract.collider.tag == "Container")
+            {
+                if(currHoverInfo != PlayerHoverInfo.OpenContainer)
+                {
+                    currHoverInfo = PlayerHoverInfo.OpenContainer;
+                    OnHoverInteractable?.Invoke(currHoverInfo);
+                }
+                if (interactAction.WasPressedThisFrame())
+                {
+                    hitInteract.collider.GetComponent<IOpenable>().ChangeOpenState();
                 }
             }
             else
