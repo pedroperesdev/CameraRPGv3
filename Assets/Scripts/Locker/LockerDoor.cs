@@ -5,15 +5,19 @@ using UnityEngine;
 public class LockerDoor : MonoBehaviour, IOpenable
 {
     [SerializeField] Transform hinge;
+    [SerializeField] AudioClip openLocker;
+    [SerializeField] AudioClip closeLocker;
+    private AudioSource audioSource;
     public enum DoorState {Closed, Open}
     public DoorState CurrState {get; private set;}
     private float currentAngle = 0f;
     private float maxRotation = 90f;
-    private float openSpeed = 4f;
+    private float openSpeed = 2.5f;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Awake()
     {
         CurrState = DoorState.Closed;
+        audioSource = GetComponent<AudioSource>();
     }
     void Start()
     {
@@ -38,6 +42,7 @@ public class LockerDoor : MonoBehaviour, IOpenable
 
     IEnumerator StartOpening()
     {
+        if(audioSource != null) audioSource.PlayOneShot(openLocker);
         gameObject.tag = "Untagged";
         while(currentAngle <= maxRotation)
         {
@@ -51,6 +56,7 @@ public class LockerDoor : MonoBehaviour, IOpenable
     }
     IEnumerator StartClosing()
     {
+        if(audioSource != null) audioSource.PlayOneShot(closeLocker);
         gameObject.tag = "Untagged";
         while(currentAngle <= maxRotation)
         {
